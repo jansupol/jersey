@@ -132,11 +132,16 @@ abstract class AbstractHk2InjectionManager implements InjectionManager {
     @SuppressWarnings("unchecked")
     public <T> List<ServiceHolder<T>> getAllServiceHolders(Class<T> contract, Annotation... qualifiers) {
         return getServiceLocator().getAllServiceHandles(contract, qualifiers).stream()
-                .map(sh -> new ServiceHolderImpl<>(
-                        sh.getService(),
-                        (Class<T>) sh.getActiveDescriptor().getImplementationClass(),
-                        sh.getActiveDescriptor().getContractTypes(),
-                        sh.getActiveDescriptor().getRanking()))
+                .map(sh -> {
+                            Class<?> implementationClass = sh.getActiveDescriptor().getImplementationClass();
+                            return new ServiceHolderImpl<T>(
+                                    sh.getService(),
+                                    (Class<T>) (implementationClass == InstanceSupplierFactoryBridge.class
+                                            ? sh.getService().getClass() : implementationClass),
+                                    sh.getActiveDescriptor().getContractTypes(),
+                                    sh.getActiveDescriptor().getRanking());
+                        }
+                )
                 .collect(Collectors.toList());
     }
 
