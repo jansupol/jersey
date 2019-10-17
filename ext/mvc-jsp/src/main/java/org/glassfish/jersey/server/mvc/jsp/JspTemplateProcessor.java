@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 
+import javax.servlet.WriteListener;
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -105,6 +106,16 @@ final class JspTemplateProcessor extends AbstractTemplateProcessor<String> {
 
         // OutputStream and Writer for HttpServletResponseWrapper.
         final ServletOutputStream responseStream = new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+                throw new UnsupportedOperationException();
+            }
+
             @Override
             public void write(final int b) throws IOException {
                 out.write(b);
