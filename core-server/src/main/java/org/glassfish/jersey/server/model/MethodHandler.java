@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -187,6 +187,15 @@ public abstract class MethodHandler implements ResourceModelComponent {
     public abstract Object getInstance(final InjectionManager injectionManager);
 
     /**
+     * Get the injected resource method handler instance. Unwrap possible cause
+     *
+     * @param injectionManager injection manager that can be used to inject get the instance.
+     * @return injected resource method handler instance.
+     * @since 2.31
+     */
+    public abstract Object getInstanceUnwrapException(final InjectionManager injectionManager) throws Throwable;
+
+    /**
      * Return whether the method handler {@link InjectionManager creates instances}
      * based on {@link Class classes}.
      *
@@ -261,6 +270,12 @@ public abstract class MethodHandler implements ResourceModelComponent {
         }
 
         @Override
+        public Object getInstanceUnwrapException(final InjectionManager injectionManager) throws Throwable {
+            return Injections.getOrCreateUnwrapException(injectionManager, handlerClass);
+        }
+
+
+        @Override
         public boolean isClassBased() {
             return true;
         }
@@ -318,6 +333,12 @@ public abstract class MethodHandler implements ResourceModelComponent {
         public Object getInstance(final InjectionManager injectionManager) {
             return handler;
         }
+
+        @Override
+        public Object getInstanceUnwrapException(final InjectionManager injectionManager) throws Throwable {
+            return handler;
+        }
+
 
         @Override
         public boolean isClassBased() {

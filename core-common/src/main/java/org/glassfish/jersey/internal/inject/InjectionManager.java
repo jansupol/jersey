@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -186,6 +186,24 @@ public interface InjectionManager {
      * implementation or contract.
      */
     <T> T getInstance(Type contractOrImpl);
+
+    /**
+     * Gets the best service from this injection manager that implements this contract or has this implementation.
+     * <p>
+     * Use this method only if other information is not needed otherwise use, otherwise use
+     * {@link InjectionManager#getAllServiceHolders(Class, Annotation...)}.
+     * </p><p>
+     * Should a throwable be thrown upon instantiation, it is unwrapped from the DI specific exception
+     * (such as HK2 {@code MultiException} or CDI {@code CreationException).
+     * </p>
+     * @param contractOrImpl May not be null, and is the contract or concrete implementation to get the best instance of.
+     * @param <T>            Instance type.
+     * @return An instance of the contract or impl.  May return  null if there is no provider that provides the given
+     * implementation or contract.
+     * @throws Throwable     The original throwable thrown during the instantiation, not wrapped in a DI specific exception
+     * @since 2.31
+     */
+    <T> T getInstanceUnwrapException(Class<T> contractOrImpl) throws Throwable;
 
     /**
      * Gets the service instance according to {@link ForeignDescriptor} which is specific to the underlying DI provider.

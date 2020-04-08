@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -152,7 +152,7 @@ abstract class AbstractJavaResourceMethodDispatcher implements ResourceMethodDis
                     } catch (IllegalAccessException | IllegalArgumentException | UndeclaredThrowableException ex) {
                         throw new ProcessingException(LocalizationMessages.ERROR_RESOURCE_JAVA_METHOD_INVOCATION(), ex);
                     } catch (InvocationTargetException ex) {
-                        throw mapTargetToRuntimeEx(ex.getCause());
+                        throw mapTargetToRuntimeEx(ex.getCause() != null ? ex.getCause() : ex.getTargetException());
                     } catch (Throwable t) {
                         throw new ProcessingException(t);
                     } finally {

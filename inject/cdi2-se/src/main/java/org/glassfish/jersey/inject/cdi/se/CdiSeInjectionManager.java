@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.CreationException;
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -146,6 +147,22 @@ public class CdiSeInjectionManager implements InjectionManager {
     @Override
     public <T> T getInstance(Type contractOrImpl) {
         return getInstanceInternal(contractOrImpl);
+    }
+
+    @Override
+    public <T> T getInstanceUnwrapException(Class<T> contractOrImpl) throws Throwable {
+        try {
+            T t = getInstanceInternal(contractOrImpl);
+
+            final String possibleProxyName =  contractOrImpl.getName() + "$Proxy$_$$_WeldClientProxy";
+            if (t.getClass().getName().equals(possibleProxyName)) {
+                t.toString(); // make the CDI proxy throw the exception
+            }
+
+            return t;
+        } catch (CreationException me) {
+            throw me.getCause() != null ? me.getCause() : me;
+        }
     }
 
     @SuppressWarnings("unchecked")

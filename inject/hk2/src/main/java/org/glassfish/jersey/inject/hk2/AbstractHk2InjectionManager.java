@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.glassfish.hk2.api.MultiException;
 import org.glassfish.jersey.internal.inject.Binding;
 import org.glassfish.jersey.internal.inject.ClassBinding;
 import org.glassfish.jersey.internal.inject.ForeignDescriptor;
@@ -158,6 +159,15 @@ abstract class AbstractHk2InjectionManager implements InjectionManager {
     @Override
     public <T> T getInstance(Class<T> clazz) {
         return getServiceLocator().getService(clazz);
+    }
+
+    @Override
+    public <T> T getInstanceUnwrapException(Class<T> clazz) throws Throwable {
+        try {
+            return getServiceLocator().getService(clazz);
+        } catch (MultiException me) {
+            throw me.getCause();
+        }
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -98,25 +98,50 @@ public class Injections {
      * @param <T>              instance type.
      * @param injectionManager DI injection manager.
      * @param clazz            class of the instance to be provider.
-     * @return instance of the class either provided as a service or created and injected  by HK2.
+     * @return instance of the class either provided as a service or created and injected by DI framework.
      */
     public static <T> T getOrCreate(InjectionManager injectionManager, final Class<T> clazz) {
         try {
             final T component = injectionManager.getInstance(clazz);
             return component == null ? injectionManager.createAndInitialize(clazz) : component;
         } catch (final RuntimeException e) {
-            // Look for WebApplicationException and return it if found. MultiException is thrown when *Param field is
-            // annotated and value cannot be provided (for example fromString(String) method can throw unchecked
-            // exception.
-            //
-            // see InvalidParamTest
-            // see JERSEY-1117
-            Throwable throwable = e.getCause();
-            if (throwable != null && WebApplicationException.class.isAssignableFrom(throwable.getClass())) {
-                throw (WebApplicationException) throwable;
-            }
-
-            throw e;
+            throw unwrapWebApplicationException(e);
         }
+    }
+
+    /**
+     * Get the class by contract or create and inject a new instance. Capable of unwrapping DI specific exception thrown
+     * the instance is created (such as when the constructor throws an Exception. Unwrap the DI specific Exception should
+     * an exception be thrown during instantiation and rethrow.
+     *
+     * @param <T>              instance type.
+     * @param injectionManager DI injection manager.
+     * @param clazz            class of the instance to be provider.
+     * @return instance of the class either provided as a service or created and injected by DI framework.
+     * @since 2.31
+     */
+    public static
+    <T> T getOrCreateUnwrapException(InjectionManager injectionManager, final Class<T> clazz) throws Throwable {
+        try {
+            final T component = injectionManager.getInstanceUnwrapException(clazz);
+            return component == null ? injectionManager.createAndInitialize(clazz) : component;
+        } catch (final RuntimeException e) {
+           throw unwrapWebApplicationException(e);
+        }
+    }
+
+    private static RuntimeException unwrapWebApplicationException(RuntimeException wrapped) {
+        // Look for WebApplicationException and return it if found. MultiException is thrown when *Param field is
+        // annotated and value cannot be provided (for example fromString(String) method can throw unchecked
+        // exception.
+        //
+        // see InvalidParamTest
+        // see JERSEY-1117
+        Throwable throwable = wrapped.getCause();
+        if (throwable != null && WebApplicationException.class.isAssignableFrom(throwable.getClass())) {
+            return (WebApplicationException) throwable;
+        }
+
+        return wrapped;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,8 +16,11 @@
 
 package org.glassfish.jersey.server.internal.routing;
 
+import org.glassfish.jersey.server.internal.process.MappableException;
 import org.glassfish.jersey.server.internal.process.RequestProcessingContext;
 import org.glassfish.jersey.server.model.MethodHandler;
+
+import javax.ws.rs.WebApplicationException;
 
 /**
  * Terminal router that pushes the matched method's handler instance to the stack
@@ -48,8 +51,16 @@ final class PushMethodHandlerRouter implements Router {
 
         final Object storedResource = routingContext.peekMatchedResource();
         if (storedResource == null || !storedResource.getClass().equals(methodHandler.getHandlerClass())) {
-            Object handlerInstance = methodHandler.getInstance(context.injectionManager());
-            routingContext.pushMatchedResource(handlerInstance);
+            try {
+                // instantiate the resource class
+                Object handlerInstance = methodHandler.getInstanceUnwrapException(context.injectionManager());
+                routingContext.pushMatchedResource(handlerInstance);
+            } catch (WebApplicationException knownException) {
+                throw knownException;
+            } catch (Throwable t) {
+                // handle all exceptions as potentially mappable (incl. ProcessingException)
+                throw new MappableException(t);
+            }
         }
         return Continuation.of(context, next);
     }
