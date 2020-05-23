@@ -48,9 +48,18 @@ public class SseTest extends JerseyTest {
 
     private static String PALINDROME = "neveroddoreven";
     private static int WAIT_TIME = 5000;
+    private static CountDownLatch startLatch;
 
     @Path("simple")
+    @Singleton
     public static class SimpleSseResource {
+
+        @GET
+        @Path("init")
+        public void init() {
+            startLatch.countDown();
+        }
+
         @GET
         @Produces(MediaType.SERVER_SENT_EVENTS)
         public void send(@Context SseEventSink sink, @Context Sse sse) {
@@ -74,8 +83,14 @@ public class SseTest extends JerseyTest {
 
         @PostConstruct
         public void init() {
-            System.out.println("INIT");
             sseBroadcaster = sse.newBroadcaster();
+        }
+
+        @GET
+        @Path("init")
+        public String initGet() {
+            startLatch.countDown();
+            return "ok";
         }
 
         @GET
@@ -107,8 +122,11 @@ public class SseTest extends JerseyTest {
 
     @Test
     public void testSend() throws InterruptedException {
+        waitForWarmUp("simple");
+
         final StringBuilder sb = new StringBuilder();
         final CountDownLatch latch = new CountDownLatch(10);
+
         try (SseEventSource source = SseEventSource.target(target().path("simple")).build()) {
             source.register((event) -> sb.append(event.readData()));
             source.register((event) -> latch.countDown());
@@ -123,6 +141,8 @@ public class SseTest extends JerseyTest {
 
     @Test
     public void testBroadcast() throws InterruptedException {
+        waitForWarmUp("broadcast");
+
         final BroadcasterClient clientOne = new BroadcasterClient(target());
         final BroadcasterClient clientTwo = new BroadcasterClient(target());
 
@@ -178,5 +198,11 @@ public class SseTest extends JerseyTest {
         public void close() {
             source.close();
         }
+    }
+
+    private void waitForWarmUp(String endpoint) throws InterruptedException {
+        startLatch = new CountDownLatch(1);
+        target(endpoint).path("init").request().get();
+        startLatch.await(WAIT_TIME, TimeUnit.MILLISECONDS); // warm-up server
     }
 }

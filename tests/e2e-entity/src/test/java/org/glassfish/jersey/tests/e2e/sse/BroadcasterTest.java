@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -47,22 +47,29 @@ import java.util.concurrent.TimeUnit;
  */
 public class BroadcasterTest extends JerseyTest {
 
+    private static CountDownLatch startLatch;
     static final CountDownLatch closeLatch = new CountDownLatch(4);
     static final CountDownLatch txLatch = new CountDownLatch(4);
     private static boolean isSingleton = false;
 
-    private static int ASYNC_WAIT_TIMEOUT = 1000; //timeout for asynchronous events to complete activities
+    private static int ASYNC_WAIT_TIMEOUT = 3000; //timeout for asynchronous events to complete activities
 
     @Path("sse")
     @Singleton
     public static class SseResource {
         private final Sse sse;
-        private SseBroadcaster broadcaster;
+        private static SseBroadcaster broadcaster;
         private OutboundSseEvent.Builder builder;
 
         public SseResource(@Context final Sse sse) {
             this.sse = sse;
             broadcaster = sse.newBroadcaster();
+        }
+
+        @GET
+        @Path("init")
+        public void init() {
+            startLatch.countDown();
         }
 
         @GET
@@ -158,6 +165,8 @@ public class BroadcasterTest extends JerseyTest {
 
     @Test
     public void test() throws InterruptedException {
+        waitForWarmUp();
+
         final SseEventSource eventSourceA = SseEventSource.target(target().path("sse/events")).build();
         final EventListWrapper<String> resultsA1 = new EventListWrapper(new ArrayList(), new CountDownLatch(5));
         final EventListWrapper<String> resultsA2 = new EventListWrapper(new ArrayList(), new CountDownLatch(5));
@@ -231,5 +240,11 @@ public class BroadcasterTest extends JerseyTest {
         closeLatch.await();
         Assert.assertTrue("Sse instances injected into resource and constructor differ. Sse should have been injected"
                 + "as a singleton", isSingleton);
+    }
+
+    private void waitForWarmUp() throws InterruptedException {
+        startLatch = new CountDownLatch(1);
+        target("sse").path("init").request().get();
+        startLatch.await(ASYNC_WAIT_TIMEOUT, TimeUnit.MILLISECONDS); // warm-up server
     }
 }
