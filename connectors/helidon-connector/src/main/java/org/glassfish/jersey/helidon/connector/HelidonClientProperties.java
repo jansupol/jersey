@@ -25,7 +25,7 @@ import io.helidon.webclient.WebClient;
  * @since 2.31
  */
 @PropertiesClass
-public final class HelidonProperties {
+public final class HelidonClientProperties {
 
     /**
      * A Helidon {@link Config} instance that is passed to {@link WebClient.Builder#config(Config)} if available
