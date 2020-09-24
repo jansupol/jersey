@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -14,27 +14,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.glassfish.jersey.media.sse.internal;
+package org.glassfish.jersey.jdk.connector.internal;
 
-import org.glassfish.jersey.media.sse.OutboundEvent;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+public class SslFilterTLS1Test extends SslFilterTest {
 
-/**
- * @author Pavel Bucek
- */
-public class JerseyEventSinkTest {
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    @Test
-    public void test() throws Exception {
-        JerseyEventSink eventSink = new JerseyEventSink(null);
-
-        eventSink.close();
-        thrown.expect(IllegalStateException.class);
-        eventSink.send(null);
+    public SslFilterTLS1Test() {
+        System.setProperty("jdk.tls.server.protocols", "TLSv1");
+        System.setProperty("jdk.tls.client.protocols", "TLSv1");
     }
+
 }
