@@ -216,6 +216,9 @@
                 <configuration>
                     <forkMode>always</forkMode>
                     <enableAssertions>false</enableAssertions>
+                    <excludes>
+                        <exclude>org/glassfish/jersey/examples/extendedwadl/ExtendedWadlWebappOsgiTest.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
