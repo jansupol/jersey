@@ -26,10 +26,6 @@ import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
-/**
- * @author Pavel Bucek
- * @author Libor Kramolis
- */
 public class HelloWorldResourceITCase extends JerseyTest {
 
     @Override
@@ -45,8 +41,14 @@ public class HelloWorldResourceITCase extends JerseyTest {
     }
 
     @Test
-    public void testHelloWorld() throws Exception {
-        String s = target().path("helloworld").request().get(String.class);
+    public void testHelloWorldA() throws Exception {
+        String s = target().path("a").path("helloworld").request().get(String.class);
+        assertTrue(s.equals("Hello World! " + this.getClass().getPackage().getName()));
+    }
+
+    @Test
+    public void testHelloWorldB() throws Exception {
+        String s = target().path("b").path("helloworld").request().get(String.class);
         assertTrue(s.equals("Hello World! " + this.getClass().getPackage().getName()));
     }
 }

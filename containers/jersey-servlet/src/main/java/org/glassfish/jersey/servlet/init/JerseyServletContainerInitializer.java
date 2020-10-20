@@ -129,8 +129,9 @@ public final class JerseyServletContainerInitializer implements ServletContainer
     }
 
     private void onStartupImpl(final Set<Class<?>> classes, final ServletContext servletContext) throws ServletException {
+        final Set<ServletRegistration> registrationsWithApplication = new HashSet<>();
+
         // first see if there are any application classes in the web app
-        Set<ServletRegistration> registrationsWithApplication = new HashSet<>();
         for (final Class<? extends Application> applicationClass : getApplicationClasses(classes)) {
             final ServletRegistration servletRegistration = servletContext.getServletRegistration(applicationClass.getName());
 
@@ -223,21 +224,9 @@ public final class JerseyServletContainerInitializer implements ServletContainer
 
         ServletRegistration registration = context.getServletRegistration(Application.class.getName());
 
-        if (registration == null) {
-            // make <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class> without init params
-            // work the same as <servlet-name>javax.ws.rs.Application</servlet-name>
-            for (ServletRegistration servletRegistration : context.getServletRegistrations().values()) {
-                if (isJerseyServlet(servletRegistration.getClassName())
-                        && !registrationsWithApplication.contains(servletRegistration)
-                        && getInitParams(servletRegistration).isEmpty()) {
-                    registration = servletRegistration;
-                    break;
-                }
-            }
-        }
+        final Set<Class<?>> appClasses = getRootResourceAndProviderClasses(classes);
 
         if (registration != null) {
-            final Set<Class<?>> appClasses = getRootResourceAndProviderClasses(classes);
             final ResourceConfig resourceConfig = ResourceConfig.forApplicationClass(ResourceConfig.class, appClasses)
                     .addProperties(getInitParams(registration))
                     .addProperties(Utils.getContextParams(context));
@@ -258,6 +247,19 @@ public final class JerseyServletContainerInitializer implements ServletContainer
                     LOGGER.log(Level.CONFIG,
                             LocalizationMessages.JERSEY_APP_REGISTERED_CLASSES(registration.getName(), appClasses));
                 }
+            }
+        }
+
+        // make <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class> without init params
+        // work the same as <servlet-name>javax.ws.rs.Application</servlet-name>
+        for (ServletRegistration servletRegistration : context.getServletRegistrations().values()) {
+            if (isJerseyServlet(servletRegistration.getClassName())
+                    && servletRegistration != registration
+                    && !registrationsWithApplication.contains(servletRegistration)
+                    && getInitParams(servletRegistration).isEmpty()) {
+                final ResourceConfig resourceConfig = ResourceConfig.forApplicationClass(ResourceConfig.class, appClasses)
+                        .addProperties(Utils.getContextParams(context));
+                Utils.store(resourceConfig, context, servletRegistration.getName());
             }
         }
     }
