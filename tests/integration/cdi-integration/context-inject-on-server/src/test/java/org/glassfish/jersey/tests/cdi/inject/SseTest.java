@@ -95,7 +95,8 @@ public class SseTest extends JerseyTest {
 
     private void testSse(String injectType) throws InterruptedException {
         final String entity = "Everyone !!!";
-        final CountDownLatch countDownLatch = new CountDownLatch(2);
+        final CountDownLatch broadcastLatch = new CountDownLatch(2);
+        final CountDownLatch registerLatch = new CountDownLatch(1);
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final WebTarget target = target(InjectionChecker.ROOT).path("register").path(injectType);
@@ -103,25 +104,28 @@ public class SseTest extends JerseyTest {
             source.register(inboundSseEvent -> {
                 try {
                     byteArrayOutputStream.write(inboundSseEvent.readData(String.class).getBytes());
-                    countDownLatch.countDown();
+                    registerLatch.countDown();
+                    broadcastLatch.countDown();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             });
             source.open();
+            registerLatch.await(5000, TimeUnit.MILLISECONDS);
+            Assert.assertEquals(0, registerLatch.getCount());
 
             try (Response response = target(InjectionChecker.ROOT).path("broadcast").path(injectType)
                     .request()
                     .post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA_TYPE))){
                 String readEntity = response.readEntity(String.class);
-                System.out.println(readEntity);
+                // System.out.println(readEntity);
                 Assert.assertEquals(readEntity, response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
             }
-            countDownLatch.await(5000, TimeUnit.MILLISECONDS);
+            broadcastLatch.await(5000, TimeUnit.MILLISECONDS);
         } finally {
             System.out.println(byteArrayOutputStream.toString());
         }
         Assert.assertTrue(byteArrayOutputStream.toString().contains(entity));
-        Assert.assertEquals(0, countDownLatch.getCount());
+        Assert.assertEquals(0, broadcastLatch.getCount());
     }
 }

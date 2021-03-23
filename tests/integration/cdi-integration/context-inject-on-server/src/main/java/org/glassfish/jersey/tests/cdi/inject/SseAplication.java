@@ -71,21 +71,21 @@ public class SseAplication extends Application {
         @Inject
         Sse injectSse;
 
-        private volatile SseBroadcaster contextSseBroadcaster;
-        private volatile SseBroadcaster injectSseBroadcaster;
+        private static SseBroadcaster contextSseBroadcaster;
+        private static SseBroadcaster injectSseBroadcaster;
 
         @GET
         @Path("register/{x}")
         @Produces(MediaType.SERVER_SENT_EVENTS)
         public void register(@PathParam("x") String inject, @Context SseEventSink eventSink) {
             if (inject.contains("context")) {
-                eventSink.send(contextSse.newEvent(inject));
                 contextSseBroadcaster = contextSse.newBroadcaster();
                 contextSseBroadcaster.register(eventSink);
+                eventSink.send(contextSse.newEvent(inject));
             } else {
-                eventSink.send(injectSse.newEvent(inject));
                 injectSseBroadcaster = injectSse.newBroadcaster();
                 injectSseBroadcaster.register(eventSink);
+                eventSink.send(injectSse.newEvent(inject));
             }
         }
 
@@ -94,9 +94,19 @@ public class SseAplication extends Application {
         @Consumes(MediaType.MULTIPART_FORM_DATA)
         public void broadcast(@PathParam("x") String inject, String event) {
             if (inject.contains("context")) {
+                if (contextSseBroadcaster == null) {
+                    throw new IllegalStateException("contextSseBroadcaster is null");
+                } else if (contextSse == null) {
+                    throw new IllegalStateException("contextSse is null");
+                }
                 contextSseBroadcaster.broadcast(contextSse.newEvent(event));
                 contextSseBroadcaster.close();
             } else {
+                if (injectSseBroadcaster == null) {
+                    throw new IllegalStateException("injectSseBroadcaster is null");
+                } else if (injectSse == null) {
+                    throw new IllegalStateException("injectSse is null");
+                }
                 injectSseBroadcaster.broadcast(injectSse.newEvent(event));
                 injectSseBroadcaster.close();
             }
