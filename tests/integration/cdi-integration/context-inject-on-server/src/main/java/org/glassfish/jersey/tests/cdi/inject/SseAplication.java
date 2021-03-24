@@ -18,9 +18,7 @@ package org.glassfish.jersey.tests.cdi.inject;
 
 import org.glassfish.jersey.server.ServerProperties;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -31,15 +29,38 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.sse.Sse;
 import javax.ws.rs.sse.SseBroadcaster;
 import javax.ws.rs.sse.SseEventSink;
-import java.util.Collections;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class SseAplication extends Application {
+
+    public static class TestExceptionMapper implements ExceptionMapper<Exception> {
+
+        @Override
+        public Response toResponse(Exception exception) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(exception.getMessage());
+            sb.append("\n");
+            sb.append(exceptionToString(exception));
+            return Response.accepted().entity(sb.toString()).build();
+        }
+
+        private String exceptionToString(Exception ex) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            return sw.toString();
+        }
+    }
 
     @Path(InjectionChecker.ROOT)
     @ApplicationScoped
@@ -84,7 +105,10 @@ public class SseAplication extends Application {
 
     @Override
     public Set<Class<?>> getClasses() {
-        return Collections.singleton(ApplicationScopedResource.class);
+        Set<Class<?>> set = new HashSet<>();
+        set.add(ApplicationScopedResource.class);
+        set.add(TestExceptionMapper.class);
+        return set;
     }
 
     @Override

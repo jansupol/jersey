@@ -35,13 +35,11 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.sse.InboundSseEvent;
 import javax.ws.rs.sse.SseEventSource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 public class SseTest extends JerseyTest {
     private Weld weld;
@@ -115,11 +113,14 @@ public class SseTest extends JerseyTest {
             try (Response response = target(InjectionChecker.ROOT).path("broadcast").path(injectType)
                     .request()
                     .post(Entity.entity(entity, MediaType.MULTIPART_FORM_DATA_TYPE))){
-                Assert.assertEquals(response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
+                String readEntity = response.readEntity(String.class);
+                System.out.println(readEntity);
+                Assert.assertEquals(readEntity, response.getStatus(), Response.Status.NO_CONTENT.getStatusCode());
             }
             countDownLatch.await(5000, TimeUnit.MILLISECONDS);
+        } finally {
+            System.out.println(byteArrayOutputStream.toString());
         }
-        System.out.println(byteArrayOutputStream.toString());
         Assert.assertTrue(byteArrayOutputStream.toString().contains(entity));
         Assert.assertEquals(0, countDownLatch.getCount());
     }

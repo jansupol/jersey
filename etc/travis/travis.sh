@@ -9,11 +9,12 @@ export BUILD_OUTPUT=$WORKDIR/build.out
 touch $BUILD_OUTPUT
 
 dump_output() {
-   echo Tailing the last 500 lines of output:
-   tail -500 $BUILD_OUTPUT
+   echo Tailing the last 1000 lines of output:
+   tail -1000 $BUILD_OUTPUT
 }
 error_handler() {
   echo ERROR: An error was encountered with the build.
+  sleep $PING_SLEEP # Finish the run
   dump_output
   exit 1
 }
