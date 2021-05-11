@@ -128,9 +128,13 @@
             </build>
         </profile>
         <profile>
-            <id>jakartification_exclude_tests</id> <!-- TODO remove after jakartification -->
+<!--            <id>jakartification_exclude_tests</id> &lt;!&ndash; TODO remove after jakartification &ndash;&gt;-->
+<!--            <activation>-->
+<!--                <jdk>[1.8,)</jdk>-->
+            <id>ignore.on.jdk16</id>
+            <!-- Spring 4 does not support JDK 16 at the moment, and it is superseded by Spring 5.2-5.3 -->
             <activation>
-                <jdk>[1.8,)</jdk>
+                <jdk>[16,)</jdk>
             </activation>
             <build>
                 <plugins>
