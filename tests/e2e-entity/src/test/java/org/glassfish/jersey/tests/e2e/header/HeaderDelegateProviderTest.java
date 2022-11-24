@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -36,6 +36,7 @@ import jakarta.ws.rs.client.ClientRequestFilter;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.core.Configuration;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
@@ -155,7 +156,7 @@ public class HeaderDelegateProviderTest {
     public void testHeaderDelegateIsUsedWhenRuntimeDelegateDecoratorIsUsed() {
         MultivaluedHashMap headers = new MultivaluedHashMap();
         headers.put(HEADER_NAME, Arrays.asList(new BeanForHeaderDelegateProviderTest()));
-        MultivaluedMap<String, String> converted = HeaderUtils.asStringHeaders(headers, null);
+        MultivaluedMap<String, String> converted = HeaderUtils.asStringHeaders(headers, (Configuration) null);
         testMap(converted, BeanForHeaderDelegateProviderTest.getValue());
 
         Client client = ClientBuilder.newClient().property(CommonProperties.METAINF_SERVICES_LOOKUP_DISABLE, false);
