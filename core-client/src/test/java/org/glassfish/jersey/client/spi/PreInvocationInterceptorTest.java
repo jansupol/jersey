@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Priority;
+import javax.inject.Inject;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestContext;
@@ -263,8 +264,12 @@ public class PreInvocationInterceptorTest {
     }
 
     private static class InjectedPreInvocationInterceptor implements PreInvocationInterceptor {
-        @Context
-        Configuration configuration;
+        private final Configuration configuration;
+
+        @Inject
+        public InjectedPreInvocationInterceptor(Configuration configuration) {
+            this.configuration = configuration;
+        }
 
         @Override
         public void beforeRequest(ClientRequestContext requestContext) {

@@ -272,8 +272,12 @@ public class JerseyClientTest {
     }
 
     public static class CustomProvider implements ClientRequestFilter {
+        private final CustomContract customContract;
+
         @Inject
-        private CustomContract customContract;
+        CustomProvider(CustomContract customContract) {
+            this.customContract = customContract;
+        }
 
         @Override
         public void filter(ClientRequestContext requestContext) throws IOException {

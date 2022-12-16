@@ -96,7 +96,7 @@ public class JerseyProxyResolverTest {
 
     @Test
     public void testProxyCreated() {
-        MyInjectionResolver injectionResolver = new MyInjectionResolver(new JaxrsProviders());
+        MyInjectionResolver injectionResolver = new MyInjectionResolver(new JaxrsProviders(null, null, null));
         InjecteeImpl injectee = new InjecteeImpl();
         injectee.setRequiredType(Providers.class);
         injectee.setParent(FIELDS[0]);
@@ -108,7 +108,7 @@ public class JerseyProxyResolverTest {
 
     @Test
     public void testProxyCached() {
-        MyInjectionResolver injectionResolver = new MyInjectionResolver(new JaxrsProviders());
+        MyInjectionResolver injectionResolver = new MyInjectionResolver(new JaxrsProviders(null, null, null));
         InjecteeImpl injectee1 = new InjecteeImpl();
         injectee1.setRequiredType(Providers.class);
         injectee1.setParent(FIELDS[0]);
@@ -125,7 +125,7 @@ public class JerseyProxyResolverTest {
 
     @Test
     public void testProxyCacheNotMismatched() {
-        MyInjectionResolver injectionResolver1 = new MyInjectionResolver(new JaxrsProviders());
+        MyInjectionResolver injectionResolver1 = new MyInjectionResolver(new JaxrsProviders(null, null, null));
         InjecteeImpl injectee1 = new InjecteeImpl();
         injectee1.setRequiredType(Providers.class);
         injectee1.setParent(FIELDS[0]);

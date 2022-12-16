@@ -19,6 +19,7 @@ package org.glassfish.jersey.tests.e2e.common;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -707,29 +708,36 @@ public class LoggingFeatureTest {
 
             // --- client request log entry
             // client added header before request has sent (and logged)
-            assertThat(getLoggedRecords().get(0).getMessage(),
+            Iterator<LogRecord> it = getLoggedRecords().iterator();
+            LogRecord logRecord = it.next();
+            while (logRecord.getLevel() == Level.WARNING) { // Skip any warning at the beginning
+                logRecord = it.next();
+            }
+            assertThat(logRecord.getMessage(),
                     containsString("1 > custom_header: client/request\n"));
 
 
             // --- container request log entry
             // container receives header from client request
-            assertThat(getLoggedRecords().get(1).getMessage(),
+            logRecord = it.next();
+            assertThat(logRecord.getMessage(),
                     containsString("1 > custom_header: client/request\n"));
             // container has added its own header after logging filter logged message
-            assertThat(getLoggedRecords().get(1).getMessage(),
+            assertThat(logRecord.getMessage(),
                     not(containsString("1 > custom_header: container/request\n")));
 
 
             // --- container response log entry
             // container added header to the response and it was logged
-            assertThat(getLoggedRecords().get(2).getMessage(),
+            assertThat(it.next().getMessage(),
                     containsString("1 < custom_header: container/response\n"));
 
             // --- client response log entry
             // client received header
-            assertThat(getLoggedRecords().get(3).getMessage(),
+            logRecord = it.next();
+            assertThat(logRecord.getMessage(),
                     containsString("1 < custom_header: container/response\n"));
-            assertThat(getLoggedRecords().get(3).getMessage(),
+            assertThat(logRecord.getMessage(),
                     not(containsString("1 < custom_header: client/response\n")));
 
         }

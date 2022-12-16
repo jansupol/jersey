@@ -22,13 +22,13 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Configuration;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -72,7 +72,10 @@ public class MetaInfServicesTest {
 
     public static class MessageProvider implements MessageBodyReader<MetaInf>, MessageBodyWriter<MetaInf> {
 
-        @Context
+        @Inject
+        MessageProvider(Configuration configuration) {
+            this.config = configuration;
+        }
         private Configuration config;
 
         @Override

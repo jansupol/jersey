@@ -34,7 +34,6 @@ import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -71,7 +70,6 @@ public class JerseyCompletionStageRxInvokerTest {
     }
 
     @Test
-    @Disabled("TODO JAX-RS 2.1")
     public void testNewClientExecutor() throws Exception {
         testClient(ClientBuilder.newBuilder()
                                 .executorService(executor)

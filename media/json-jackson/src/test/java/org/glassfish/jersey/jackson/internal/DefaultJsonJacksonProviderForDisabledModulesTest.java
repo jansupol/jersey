@@ -55,6 +55,9 @@ public class DefaultJsonJacksonProviderForDisabledModulesTest extends JerseyTest
     private static class TestJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
 
         @Inject
+        public TestJacksonJaxbJsonProvider(Configuration configuration) {
+            this.configuration = configuration;
+        }
         private Configuration configuration;
 
         @PostConstruct

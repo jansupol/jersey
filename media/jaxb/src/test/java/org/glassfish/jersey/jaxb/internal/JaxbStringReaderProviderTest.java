@@ -48,7 +48,7 @@ public class JaxbStringReaderProviderTest {
     public void stringReaderDoesNotReadExternalDtds() {
 
         Provider<SAXParserFactory> saxParserFactoryProvider = new Provider<SAXParserFactory>() {
-            final SaxParserFactoryInjectionProvider spf = new SaxParserFactoryInjectionProvider(
+            final SaxParserFactoryInjectionProvider spf = new SaxParserFactoryInjectionProvider(null,
                     new CommonConfig(RuntimeType.SERVER, ComponentBag.INCLUDE_ALL));
 
             @Override

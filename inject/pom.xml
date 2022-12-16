@@ -36,5 +36,6 @@
     <modules>
         <module>cdi2-se</module>
         <module>hk2</module>
+        <module>injectless-client</module>
     </modules>
 </project>
