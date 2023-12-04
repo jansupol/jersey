@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.glassfish.jersey.inject.weld.internal.injector;
+package org.glassfish.jersey.test.inject.weld.weld.internal.injector;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -27,6 +27,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 
+import org.glassfish.jersey.inject.weld.internal.injector.CachedConstructorAnalyzer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

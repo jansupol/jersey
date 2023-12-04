@@ -44,8 +44,8 @@ public class ClientBootstrapPreinitialization implements BootstrapPreinitializat
             return;
         }
 
-        ClientConfig config = new ClientConfig();
-        JerseyClient client = (JerseyClient) ClientBuilder.newClient(config);
-        client.getConfiguration().getClientExecutor();
+//        ClientConfig config = new ClientConfig();
+//        JerseyClient client = (JerseyClient) ClientBuilder.newClient(config);
+//        client.getConfiguration().getClientExecutor();
     }
 }

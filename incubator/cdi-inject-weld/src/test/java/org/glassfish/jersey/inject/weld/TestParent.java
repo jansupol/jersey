@@ -14,10 +14,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.glassfish.jersey.inject.weld.internal.managed;
+package org.glassfish.jersey.test.inject.weld.weld;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.ws.rs.RuntimeType;
+
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.internal.inject.Injections;
 import org.junit.jupiter.api.AfterAll;
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.BeforeAll;
 public class TestParent {
     protected static SeContainer container;
     protected InjectionManager injectionManager;
+    protected static RuntimeType runtimeType = RuntimeType.SERVER;
 
 
     @BeforeAll
@@ -37,7 +40,7 @@ public class TestParent {
 
     @BeforeEach
     public void init() {
-        injectionManager = Injections.createInjectionManager();
+        injectionManager = Injections.createInjectionManager(runtimeType);
     }
 
     @AfterAll

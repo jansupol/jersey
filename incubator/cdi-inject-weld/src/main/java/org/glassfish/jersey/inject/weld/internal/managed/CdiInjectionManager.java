@@ -286,6 +286,9 @@ public class CdiInjectionManager implements InjectionManager {
     public <T> List<T> getAllInstances(Type contractOrImpl) {
         List<T> result = new ArrayList<>();
         for (Bean<?> bean : beanManager.getBeans(contractOrImpl)) {
+            if (!isRuntimeTypeBean(bean)) {
+                continue;
+            }
             CreationalContext<?> ctx = createCreationalContext(bean);
             Object reference = beanManager.getReference(bean, contractOrImpl, ctx);
             result.add((T) reference);

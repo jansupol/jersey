@@ -62,7 +62,7 @@ import org.jboss.weld.util.reflection.Formats;
  * instances. {@code Delegate} is a original {@code InjectionTarget} which is able to inject other fields/parameters which
  * are managed by CDI.
  * <p>
- * Implementation is also able create with custom {@code jerseyConstructor} if it is provided. This functionality allows override
+ * Implementation is also able to create with custom {@code jerseyConstructor} if it is provided. This functionality allows override
  * default instantiator and use the Jersey-specific one.
  */
 public class JerseyInjectionTarget<T> extends BasicInjectionTarget<T> {

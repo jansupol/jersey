@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.glassfish.jersey.inject.weld.internal.managed;
+package org.glassfish.jersey.test.inject.weld.weld.internal.managed;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -28,6 +28,8 @@ import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.ws.rs.core.GenericType;
 
+import org.glassfish.jersey.test.inject.weld.weld.TestParent;
+import org.glassfish.jersey.inject.weld.internal.managed.BinderRegisterExtension;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 
 import org.hamcrest.core.StringStartsWith;

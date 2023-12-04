@@ -14,13 +14,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.glassfish.jersey.inject.weld.internal.managed;
+package org.glassfish.jersey.test.inject.weld.weld.internal.managed;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import javax.ws.rs.RuntimeType;
 
+import org.glassfish.jersey.test.inject.weld.weld.TestParent;
 import org.glassfish.jersey.inject.weld.managed.CdiInjectionManagerFactory;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.junit.jupiter.api.Assertions;

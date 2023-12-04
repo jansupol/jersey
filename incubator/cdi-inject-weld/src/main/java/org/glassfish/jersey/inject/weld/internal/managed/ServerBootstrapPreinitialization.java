@@ -578,7 +578,7 @@ public class ServerBootstrapPreinitialization implements BootstrapPreinitializat
 //        binder.bind(ChunkedResponseWriter.class).to(MessageBodyWriter.class).in(Singleton.class);
 //        binder.bind(JsonWithPaddingInterceptor.class).to(WriterInterceptor.class).in(Singleton.class);
 
-        if (runtimeType == RuntimeType.SERVER) {
+        if (runtimeType == null /*RuntimeType.SERVER*/) {
             // new ApplicationHandler(new ResourceConfig());
 
             //grizzly

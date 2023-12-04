@@ -274,7 +274,7 @@ class BinderRegisterExtension implements Extension {
      *
      * @param abd         {@code AfterBeanDiscovery} event.
      * @param beanManager current {@code BeanManager}.
-     * @link ProcessAnnotatedType} bootstrap phase.
+     * @see ProcessAnnotatedType bootstrap phase.
      */
     void registerBeans(@Observes AfterBeanDiscovery abd, BeanManager beanManager) {
         serverInjectionManager.set(new CdiInjectionManager(beanManager, mergedBindings));
@@ -282,7 +282,7 @@ class BinderRegisterExtension implements Extension {
         beanManagerSupplier = () -> beanManager; // set bean manager supplier to be called by bindings#configure
         CdiInjectionManagerFactoryBase.setBeanManager(beanManager);
 
-        registerApplicationHandler(beanManager);
+//        registerApplicationHandler(beanManager);
 
         registrationDone.set(true); //
 
@@ -552,10 +552,19 @@ class BinderRegisterExtension implements Extension {
     }
 
     private void processRegistrars() {
+        for (org.glassfish.jersey.innate.BootstrapPreinitialization registrar :
+                ServiceFinder.find(org.glassfish.jersey.innate.BootstrapPreinitialization.class)) {
+            //registrars.add(registrar);
+            registrar.preregister(RuntimeType.SERVER, serverBootstrapInjectionManager);
+            registrar.preregister(RuntimeType.CLIENT, clientBootstrapInjectionManager);
+        }
+
+
         final List<BootstrapPreinitialization> registrars = new LinkedList<>();
         for (BootstrapPreinitialization registrar : ServiceFinder.find(BootstrapPreinitialization.class)) {
             registrars.add(registrar);
         }
+
         for (BootstrapPreinitialization registrar : registrars) {
             registrar.register(RuntimeType.SERVER, serverBindings);
         }

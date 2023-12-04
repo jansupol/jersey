@@ -175,7 +175,7 @@ public class InitializableInstanceBinding<T> extends MatchableBinding<T, Initial
 
         @Override
         public String toString() {
-            return "InitializableWrappingInstanceBinding(" + wrapped.getService().getClass() + ")";
+            return wrapped.toString();
         }
 
         @Override

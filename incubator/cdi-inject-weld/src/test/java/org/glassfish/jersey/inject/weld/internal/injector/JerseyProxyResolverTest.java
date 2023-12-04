@@ -14,9 +14,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.glassfish.jersey.inject.weld.internal.injector;
+package org.glassfish.jersey.test.inject.weld.weld.internal.injector;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -188,5 +189,26 @@ public class JerseyProxyResolverTest {
 
     @ApplicationScoped
     private static class TestApplicationScope {
+    }
+
+    private Object newJerseyProxyResolver() {
+        Class cls = null;
+        try {
+            cls = Class.forName("org.glassfish.jersey.inject.weld.internal.injector.JerseyProxyResolver");
+            return cls.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private <T> Object proxy(Object resolver, InjecteeImpl arg1, T arg2) {
+        Method m = null;
+        try {
+            m = resolver.getClass().getDeclaredMethod("proxy", Injectee.class, arg2.getClass());
+            Object o = m.invoke(resolver, arg1, arg2);
+            return o;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
