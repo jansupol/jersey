@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,6 +16,7 @@
 
 package org.glassfish.jersey.server.internal;
 
+import javax.ws.rs.RuntimeType;
 import javax.ws.rs.core.Application;
 
 import org.glassfish.jersey.internal.AbstractRuntimeDelegate;
@@ -35,7 +36,7 @@ import org.glassfish.jersey.server.ContainerFactory;
 public class RuntimeDelegateImpl extends AbstractRuntimeDelegate {
 
     public RuntimeDelegateImpl() {
-        super(new MessagingBinders.HeaderDelegateProviders().getHeaderDelegateProviders());
+        super(new MessagingBinders.HeaderDelegateProviders(RuntimeType.SERVER).getHeaderDelegateProviders());
     }
 
     @Override

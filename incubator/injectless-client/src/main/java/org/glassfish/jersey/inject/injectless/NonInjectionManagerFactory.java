@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import org.glassfish.jersey.internal.inject.InjectionManagerFactory;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.ws.rs.ConstrainedTo;
+import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.RuntimeType;
 
@@ -43,5 +44,10 @@ public class NonInjectionManagerFactory implements InjectionManagerFactory {
     @Override
     public InjectionManager create(Object parent) {
         return new NonInjectionManager(false);
+    }
+
+    @Override
+    public InjectionManager create(Object parent, Configuration configuration) {
+        return create(parent); // RuntimeType is always client
     }
 }

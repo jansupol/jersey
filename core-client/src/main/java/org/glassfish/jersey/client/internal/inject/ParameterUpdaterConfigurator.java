@@ -53,6 +53,6 @@ public class ParameterUpdaterConfigurator implements BootstrapConfigurator {
         ParameterUpdaterFactory parameterUpdaterFactory = new ParameterUpdaterFactory(lazyParamConverterFactory);
         clientBag.setParameterUpdaterProvider(parameterUpdaterFactory);
         injectionManager.register(Bindings.service(parameterUpdaterFactory)
-                        .to(ParameterUpdaterProvider.class));
+                        .to(ParameterUpdaterProvider.class).id(2011));
     }
 }
