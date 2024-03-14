@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -383,6 +383,15 @@ public class EntityPartTest extends JerseyTest {
         try (Response response = target("/getList").request().get()) {
             List<EntityPart> result = response.readEntity(LIST_ENTITY_PART_TYPE);
             assertEquals("data1", result.get(0).getContent(String.class));
+        }
+    }
+
+    @Test
+    public void readInputStreamMultipleTimes() throws IOException {
+        try (Response response = target("/getList").request().get()) {
+            List<EntityPart> result = response.readEntity(LIST_ENTITY_PART_TYPE);
+            result.get(0).getContent();
+            result.get(0).getContent();
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2021 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -244,7 +244,10 @@ public class FormDataBodyPart extends BodyPart implements EntityPart {
 
     @Override
     public InputStream getContent() {
-        return getContent(InputStream.class);
+        if (contentRead.get()) { // permit multiple times the InputStream
+            throw new IllegalStateException(LocalizationMessages.CONTENT_HAS_BEEN_ALREADY_READ());
+        }
+        return getEntityAs(InputStream.class);
     }
 
     @Override
