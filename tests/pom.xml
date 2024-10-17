@@ -47,7 +47,6 @@
         <module>e2e-testng</module>
         <module>e2e-tls</module>
         <module>integration</module>
-        <module>jmockit</module>
         <module>mem-leaks</module>
         <module>osgi</module>
         <module>stress</module>
@@ -115,6 +114,15 @@
             </activation>
             <modules>
                 <module>release-test</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>JMOCKIT-MODULE-FOR-PRE-JDK24</id>
+            <activation>
+                <jdk>[1.8,24)</jdk>
+            </activation>
+            <modules>
+                <module>jmockit</module>
             </modules>
         </profile>
     </profiles>

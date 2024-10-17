@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2022 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,11 +30,14 @@ import static org.glassfish.jersey.internal.config.ExternalPropertiesConfigurati
 
 public class ExternalPropertiesConfigurationFactoryTest {
 
+    private static boolean isSecurityManager;
+
     /**
      * Predefine some properties to be read from config
      */
     @BeforeAll
     public static void setUp() {
+        isSecurityManager = System.getSecurityManager() != null;
         System.setProperty(CommonProperties.ALLOW_SYSTEM_PROPERTIES_PROVIDER, Boolean.TRUE.toString());
 
         System.setProperty("jersey.config.server.provider.scanning.recursive", "PASSED");
@@ -53,7 +56,11 @@ public class ExternalPropertiesConfigurationFactoryTest {
     public void readSystemPropertiesTest() {
         final Object result =
                 readExternalPropertiesMap().get("jersey.config.server.provider.scanning.recursive");
-        Assertions.assertNull(result);
+        if (isSecurityManager) {
+            Assertions.assertNull(result);
+        } else {
+            Assertions.assertEquals("PASSED", result);
+        }
         Assertions.assertEquals(Boolean.TRUE,
                 getConfig().isProperty(CommonProperties.JSON_PROCESSING_FEATURE_DISABLE));
         Assertions.assertEquals(Boolean.TRUE,
@@ -81,8 +88,11 @@ public class ExternalPropertiesConfigurationFactoryTest {
         inputProperties.put("org.jersey.microprofile.config.added", "ADDED");
         getConfig().mergeProperties(inputProperties);
         final Object result = readExternalPropertiesMap().get("jersey.config.server.provider.scanning.recursive");
-        Assertions.assertNull(result);
-        Assertions.assertNull(readExternalPropertiesMap().get("org.jersey.microprofile.config.added"));
+        final Object resultAdded = readExternalPropertiesMap().get("org.jersey.microprofile.config.added");
+        if (isSecurityManager) {
+            Assertions.assertNull(result);
+            Assertions.assertNull(resultAdded);
+        }
     }
 
 }
