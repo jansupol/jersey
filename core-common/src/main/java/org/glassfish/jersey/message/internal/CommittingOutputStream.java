@@ -128,6 +128,10 @@ public final class CommittingOutputStream extends OutputStream {
         this.streamProvider = streamProvider;
     }
 
+    /* package */ boolean hasStreamProvider() {
+        return streamProvider != null;
+    }
+
     /**
      * Enable buffering of the serialized entity.
      *
