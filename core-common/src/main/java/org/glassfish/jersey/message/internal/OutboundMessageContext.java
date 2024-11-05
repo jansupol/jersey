@@ -561,18 +561,13 @@ public class OutboundMessageContext extends MessageHeaderMethods {
     public void close() {
         if (hasEntity()) {
             try {
-                if (CommittingOutputStream.class.isInstance(getEntityStream())) {
-                    // This invokes the ContainerResponseWriter#writeResponseStatusAndHeaders
-                    // which allows to set the proper entityStream
-                    CommittingOutputStream cos = (CommittingOutputStream) getEntityStream();
-                    if (cos.hasStreamProvider()) {
-                        ((CommittingOutputStream) getEntityStream()).commit();
-                    }
-                }
-
                 final OutputStream es = getEntityStream();
                 if (!FlushedCloseable.class.isInstance(es)) {
-                    es.flush();
+                    if (CommittingOutputStream.class.isInstance(es)) {
+                        ((CommittingOutputStream) es).flushOnClose();
+                    } else {
+                        es.flush();
+                    }
                 }
                 es.close();
             } catch (IOException e) {
