@@ -24,11 +24,14 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class HostHeaderTest extends JerseyTest {
@@ -37,6 +40,12 @@ public class HostHeaderTest extends JerseyTest {
 
     @Path("/")
     public static class HostHeaderTestEchoResource {
+
+        @POST
+        public String post(@Context HttpHeaders headers) {
+            return get(headers);
+        }
+
         @GET
         public String get(@Context HttpHeaders headers) {
             String sPort = headers.getHeaderString(HTTP_HEADER_NAME);
@@ -67,6 +76,21 @@ public class HostHeaderTest extends JerseyTest {
                 .request()
                 .header(HTTP_HEADER_NAME, port)
                 .get()) {
+            MatcherAssert.assertThat(response.getStatus(), Matchers.is(200));
+            MatcherAssert.assertThat(response.readEntity(String.class), Matchers.is(GET.class.getName()));
+        }
+    }
+
+    @Test
+    public void testHostHeaderAndPortAfterRemovedFromFilter() {
+        int port = getPort();
+        ClientConfig config = new ClientConfig();
+        config.connectorProvider(new NettyConnectorProvider());
+        try (Response response = ClientBuilder.newClient(config)
+                .target(target().getUri())
+                .request()
+                .header(HTTP_HEADER_NAME, port)
+                .post(Entity.entity("xxx", MediaType.TEXT_PLAIN_TYPE))) {
             MatcherAssert.assertThat(response.getStatus(), Matchers.is(200));
             MatcherAssert.assertThat(response.readEntity(String.class), Matchers.is(GET.class.getName()));
         }

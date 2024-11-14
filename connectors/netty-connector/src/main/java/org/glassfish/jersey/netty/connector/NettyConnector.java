@@ -415,18 +415,7 @@ class NettyConnector implements Connector {
             // headers
             if (!jerseyRequest.hasEntity()) {
                 setHeaders(jerseyRequest, nettyRequest.headers(), false);
-
-                // host header - http 1.1
-                if (!nettyRequest.headers().contains(HttpHeaderNames.HOST)) {
-                    int requestPort = jerseyRequest.getUri().getPort();
-                    final String hostHeader;
-                    if (requestPort != 80 && requestPort != 443) {
-                        hostHeader = jerseyRequest.getUri().getHost() + ":" + requestPort;
-                    } else {
-                        hostHeader = jerseyRequest.getUri().getHost();
-                    }
-                    nettyRequest.headers().add(HttpHeaderNames.HOST, hostHeader);
-                }
+                setHostHeader(jerseyRequest, nettyRequest);
             }
 
             if (jerseyRequest.hasEntity()) {
@@ -474,9 +463,7 @@ class NettyConnector implements Connector {
                     @Override
                     public OutputStream getOutputStream(int contentLength) throws IOException {
                         replaceHeaders(jerseyRequest, nettyRequest.headers()); // WriterInterceptor changes
-                        if (!nettyRequest.headers().contains(HttpHeaderNames.HOST)) {
-                            nettyRequest.headers().add(HttpHeaderNames.HOST, jerseyRequest.getUri().getHost());
-                        }
+                        setHostHeader(jerseyRequest, nettyRequest);
                         headersSet.countDown();
 
                         return entityWriter.getOutputStream();
@@ -625,5 +612,19 @@ class NettyConnector implements Connector {
      */
     private static boolean additionalProxyHeadersToKeep(String key) {
         return key.length() > 2 && (key.charAt(0) == 'x' || key.charAt(0) == 'X') && (key.charAt(1) == '-');
+    }
+
+    private static void setHostHeader(ClientRequest jerseyRequest, HttpRequest nettyRequest) {
+        // host header - http 1.1
+        if (!nettyRequest.headers().contains(HttpHeaderNames.HOST)) {
+            int requestPort = jerseyRequest.getUri().getPort();
+            final String hostHeader;
+            if (requestPort != 80 && requestPort != 443) {
+                hostHeader = jerseyRequest.getUri().getHost() + ":" + requestPort;
+            } else {
+                hostHeader = jerseyRequest.getUri().getHost();
+            }
+            nettyRequest.headers().add(HttpHeaderNames.HOST, hostHeader);
+        }
     }
 }
