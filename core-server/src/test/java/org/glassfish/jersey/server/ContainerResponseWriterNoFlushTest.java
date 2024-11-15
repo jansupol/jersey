@@ -73,7 +73,7 @@ public class ContainerResponseWriterNoFlushTest {
         public OutputStream writeResponseStatusAndHeaders(long contentLength, ContainerResponse responseContext)
                 throws ContainerException {
             outputStream = new TestResponseOutputStream();
-            responseContext.setEntityStream(outputStream);
+//            responseContext.setEntityStream(outputStream);
             return outputStream;
         }
 
