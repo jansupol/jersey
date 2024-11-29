@@ -17,6 +17,7 @@
 package org.glassfish.jersey.client.innate.inject;
 
 import org.glassfish.jersey.client.internal.LocalizationMessages;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.glassfish.jersey.internal.inject.Binder;
 import org.glassfish.jersey.internal.inject.Binding;
 import org.glassfish.jersey.internal.inject.ClassBinding;
@@ -30,6 +31,7 @@ import org.glassfish.jersey.internal.inject.ServiceHolderImpl;
 import org.glassfish.jersey.internal.inject.SupplierClassBinding;
 import org.glassfish.jersey.internal.inject.SupplierInstanceBinding;
 import org.glassfish.jersey.internal.util.collection.LazyValue;
+import org.glassfish.jersey.internal.util.collection.Ref;
 import org.glassfish.jersey.internal.util.collection.Value;
 import org.glassfish.jersey.internal.util.collection.Values;
 import org.glassfish.jersey.process.internal.RequestScope;
@@ -52,10 +54,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -74,8 +78,6 @@ public final class NonInjectionManager implements InjectionManager {
     private final MultivaluedMap<Type, SupplierInstanceBinding<?>> supplierTypeInstanceBindings = new MultivaluedHashMap<>();
     private final MultivaluedMap<Type, SupplierClassBinding<?>> supplierTypeClassBindings = new MultivaluedHashMap<>();
 
-    private final MultivaluedMap<DisposableSupplier, Object> disposableSupplierObjects = new MultivaluedHashMap<>();
-
     private final Instances instances = new Instances();
     private final Types types = new Types();
 
@@ -88,10 +90,11 @@ public final class NonInjectionManager implements InjectionManager {
      * @param <TYPE> the type for which the instance is created, either Class, or ParametrizedType (for instance
      * Provider&lt;SomeClass&gt;).
      */
-    private class TypedInstances<TYPE> {
+    private class TypedInstances<TYPE extends Type> {
         private final MultivaluedMap<TYPE, InstanceContext<?>> singletonInstances = new MultivaluedHashMap<>();
         private ThreadLocal<MultivaluedMap<TYPE, InstanceContext<?>>> threadInstances = new ThreadLocal<>();
-        private final List<Object> threadPredestroyables = Collections.synchronizedList(new LinkedList<>());
+        private ThreadLocal<MultivaluedMap<DisposableSupplier, Object>> disposableSupplierObjects =
+                ThreadLocal.withInitial(() -> new MultivaluedHashMap<>());
 
         private <T> List<InstanceContext<?>> _getSingletons(TYPE clazz) {
             List<InstanceContext<?>> si;
@@ -102,7 +105,7 @@ public final class NonInjectionManager implements InjectionManager {
         }
 
         @SuppressWarnings("unchecked")
-        <T> T _addSingleton(TYPE clazz, T instance, Binding<?, ?> binding, Annotation[] qualifiers) {
+        <T> T _addSingleton(TYPE clazz, T instance, Binding<?, ?> binding, Annotation[] qualifiers, boolean destroy) {
             synchronized (singletonInstances) {
                 // check existing singleton with a qualifier already created by another thread io a meantime
                 List<InstanceContext<?>> values = singletonInstances.get(clazz);
@@ -115,19 +118,19 @@ public final class NonInjectionManager implements InjectionManager {
                         return (T) qualified.get(0).instance;
                     }
                 }
-                singletonInstances.add(clazz, new InstanceContext<>(instance, binding, qualifiers));
-                threadPredestroyables.add(instance);
+                InstanceContext<?> instanceContext = new InstanceContext<>(instance, binding, qualifiers, !destroy);
+                singletonInstances.add(clazz, instanceContext);
                 return instance;
             }
         }
 
         @SuppressWarnings("unchecked")
         <T> T addSingleton(TYPE clazz, T t, Binding<?, ?> binding, Annotation[] instanceQualifiers) {
-            T t2  = _addSingleton(clazz, t, binding, instanceQualifiers);
+            T t2 = _addSingleton(clazz, t, binding, instanceQualifiers, true);
             if (t2 == t) {
                 for (Type contract : binding.getContracts()) {
                     if (!clazz.equals(contract) && isClass(contract)) {
-                        _addSingleton((TYPE) contract, t, binding, instanceQualifiers);
+                        _addSingleton((TYPE) contract, t, binding, instanceQualifiers, false);
                     }
                 }
             }
@@ -143,21 +146,22 @@ public final class NonInjectionManager implements InjectionManager {
             return list;
         }
 
-        private <T> void _addThreadInstance(TYPE clazz, T instance, Binding<T, ?> binding, Annotation[] qualifiers) {
+        private <T> void _addThreadInstance(
+                TYPE clazz, T instance, Binding<T, ?> binding, Annotation[] qualifiers, boolean destroy) {
             MultivaluedMap<TYPE, InstanceContext<?>> map = threadInstances.get();
             if (map == null) {
                 map = new MultivaluedHashMap<>();
                 threadInstances.set(map);
             }
-            map.add(clazz, new InstanceContext<>(instance, binding, qualifiers));
-            threadPredestroyables.add(instance);
+            InstanceContext<?> instanceContext = new InstanceContext<>(instance, binding, qualifiers, !destroy);
+            map.add(clazz, instanceContext);
         }
 
         <T> void addThreadInstance(TYPE clazz, T t, Binding<T, ?> binding, Annotation[] instanceQualifiers) {
-            _addThreadInstance(clazz, t, binding, instanceQualifiers);
+            _addThreadInstance(clazz, t, binding, instanceQualifiers, true);
             for (Type contract : binding.getContracts()) {
                 if (!clazz.equals(contract) && isClass(contract)) {
-                    _addThreadInstance((TYPE) contract, t, binding, instanceQualifiers);
+                    _addThreadInstance((TYPE) contract, t, binding, instanceQualifiers, false);
                 }
             }
         }
@@ -175,28 +179,78 @@ public final class NonInjectionManager implements InjectionManager {
         private <T> List<InstanceContext<?>> _getContexts(TYPE clazz) {
             List<InstanceContext<?>> si = _getSingletons(clazz);
             List<InstanceContext<?>> ti = _getThreadInstances(clazz);
-            if (si == null && ti != null) {
-                si = ti;
-            } else if (ti != null) {
-                si.addAll(ti);
-            }
-            return si;
+            return InstanceContext.merge(si, ti);
         }
 
         <T> T getInstance(TYPE clazz, Annotation[] annotations) {
             List<T> i = getInstances(clazz, annotations);
             if (i != null) {
                 checkUnique(i);
-                return i.get(0);
+                return instanceOrSupply(clazz, i.get(0));
             }
             return null;
         }
 
+        private <T> T instanceOrSupply(TYPE clazz, T t) {
+            if (!Class.class.isInstance(clazz) || ((Class) clazz).isInstance(t)) {
+                return t;
+            } else if (Supplier.class.isInstance(t)) {
+                return (T) registerDisposableSupplierAndGet((Supplier) t, this);
+            } else if (Provider.class.isInstance(t)) {
+                return (T) ((Provider) t).get();
+            } else {
+                return t;
+            }
+        }
+
         void dispose() {
             singletonInstances.forEach((clazz, instances) -> instances.forEach(instance -> preDestroy(instance.getInstance())));
-            threadPredestroyables.forEach(NonInjectionManager.this::preDestroy);
+            disposeThreadInstances(true);
             /* The java.lang.ThreadLocal$ThreadLocalMap$Entry[] keeps references to this NonInjectionManager */
             threadInstances = null;
+            disposableSupplierObjects = null;
+        }
+
+        void disposeThreadInstances(boolean allThreadInstances) {
+            MultivaluedMap<TYPE, InstanceContext<?>> ti = threadInstances.get();
+            if (ti == null) {
+                return;
+            }
+            Set<Map.Entry<TYPE, List<InstanceContext<?>>>> tiSet = ti.entrySet();
+            Iterator<Map.Entry<TYPE, List<InstanceContext<?>>>> tiSetIt = tiSet.iterator();
+            while (tiSetIt.hasNext()) {
+                Map.Entry<TYPE, List<InstanceContext<?>>> entry = tiSetIt.next();
+                Iterator<InstanceContext<?>> listIt = entry.getValue().iterator();
+                while (listIt.hasNext()) {
+                    InstanceContext<?> instanceContext = listIt.next();
+                    if (allThreadInstances || instanceContext.getBinding().getScope() != PerThread.class) {
+                        listIt.remove();
+                        if (DisposableSupplier.class.isInstance(instanceContext.getInstance())) {
+                            MultivaluedMap<DisposableSupplier, Object> disposeMap = disposableSupplierObjects.get();
+                            Iterator<Map.Entry<DisposableSupplier, List<Object>>> disposeMapIt = disposeMap.entrySet().iterator();
+                            while (disposeMapIt.hasNext()) {
+                                Map.Entry<DisposableSupplier, List<Object>> disposeMapEntry = disposeMapIt.next();
+                                if (disposeMapEntry.getKey() == /* identity */ instanceContext.getInstance()) {
+                                    Iterator<Object> disposeMapEntryIt = disposeMapEntry.getValue().iterator();
+                                    while (disposeMapEntryIt.hasNext()) {
+                                        Object disposeInstance = disposeMapEntryIt.next();
+                                        ((DisposableSupplier) instanceContext.getInstance()).dispose(disposeInstance);
+                                        disposeMapEntryIt.remove();
+                                    }
+                                }
+                                if (disposeMapEntry.getValue().isEmpty()) {
+                                    disposeMapIt.remove();
+                                }
+                            }
+                        }
+                        instanceContext.destroy(NonInjectionManager.this);
+                    }
+                    if (entry.getValue().isEmpty()) {
+                        tiSetIt.remove();
+                    }
+                }
+            }
+            disposableSupplierObjects.remove();
         }
     }
 
@@ -207,9 +261,19 @@ public final class NonInjectionManager implements InjectionManager {
     }
 
     public NonInjectionManager() {
+        Binding binding = new AbstractBinder() {
+            @Override
+            protected void configure() {
+                bind(NonInjectionRequestScope.class).to(RequestScope.class).in(Singleton.class);
+            }
+        }.getBindings().iterator().next();
+        RequestScope scope = new NonInjectionRequestScope(this);
+        instances.addSingleton(RequestScope.class, scope, binding, null);
+        types.addSingleton(RequestScope.class, scope, binding, null);
     }
 
     public NonInjectionManager(boolean warning) {
+        this();
         if (warning) {
             logger.warning(LocalizationMessages.NONINJECT_FALLBACK());
         } else {
@@ -219,18 +283,19 @@ public final class NonInjectionManager implements InjectionManager {
 
     @Override
     public void completeRegistration() {
-        instances._addSingleton(InjectionManager.class, this, new InjectionManagerBinding(), null);
+        instances._addSingleton(InjectionManager.class, this, new InjectionManagerBinding(), null, false);
     }
 
     @Override
     public void shutdown() {
         shutdown = true;
-
-        disposableSupplierObjects.forEach((supplier, objects) -> objects.forEach(supplier::dispose));
-        disposableSupplierObjects.clear();
-
         instances.dispose();
         types.dispose();
+    }
+
+    void disposeRequestScopedInstances() {
+        instances.disposeThreadInstances(false);
+        types.disposeThreadInstances(false);
     }
 
     @Override
@@ -411,12 +476,7 @@ public final class NonInjectionManager implements InjectionManager {
             return (T) this;
         }
         if (RequestScope.class.equals(createMe)) {
-            if (!isRequestScope) {
-                isRequestScope = true;
-                return (T) new NonInjectionRequestScope();
-            } else {
-                throw new IllegalStateException(LocalizationMessages.NONINJECT_REQUESTSCOPE_CREATED());
-            }
+            throw new IllegalStateException(LocalizationMessages.NONINJECT_REQUESTSCOPE_CREATED());
         }
 
         ClassBindings<T> classBindings = classBindings(createMe);
@@ -431,12 +491,7 @@ public final class NonInjectionManager implements InjectionManager {
             return (T) this;
         }
         if (RequestScope.class.equals(createMe)) {
-            if (!isRequestScope) {
-                isRequestScope = true;
-                return (T) new NonInjectionRequestScope();
-            } else {
-                throw new IllegalStateException(LocalizationMessages.NONINJECT_REQUESTSCOPE_CREATED());
-            }
+            throw new IllegalStateException(LocalizationMessages.NONINJECT_REQUESTSCOPE_CREATED());
         }
 
         ClassBindings<T> classBindings = classBindings(createMe);
@@ -535,7 +590,9 @@ public final class NonInjectionManager implements InjectionManager {
 
     @Override
     public void preDestroy(Object preDestroyMe) {
-        Method preDestroy = getAnnotatedMethod(preDestroyMe, PreDestroy.class);
+        Method preDestroy = Method.class.isInstance(preDestroyMe)
+                ? (Method) preDestroyMe
+                : getAnnotatedMethod(preDestroyMe, PreDestroy.class);
         if (preDestroy != null) {
             ensureAccessible(preDestroy);
             try {
@@ -567,20 +624,27 @@ public final class NonInjectionManager implements InjectionManager {
      * @return The proxy for the instance supplied by a supplier or the instance if not required to be proxied.
      */
     @SuppressWarnings("unchecked")
-    private <T> T createSupplierProxyIfNeeded(Boolean createProxy, Class<T> iface, Supplier<T> supplier) {
+    private <T> T createSupplierProxyIfNeeded(
+            Boolean createProxy, Class<T> iface, Supplier<Supplier<T>> supplier, TypedInstances<?> typedInstances) {
         if (createProxy != null && createProxy && iface.isInterface()) {
             T proxy = (T) Proxy.newProxyInstance(iface.getClassLoader(), new Class[]{iface}, new InvocationHandler() {
-                final SingleRegisterSupplier<T> singleSupplierRegister = new SingleRegisterSupplier<>(supplier);
+                final Set<Object> instances = new HashSet<>();
+
                 @Override
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                    T t = singleSupplierRegister.get();
+                    Supplier<T> supplierT = supplier.get();
+                    T t = supplierT.get();
+                    if (DisposableSupplier.class.isInstance(supplierT) && !instances.contains(t)) {
+                        MultivaluedMap<DisposableSupplier, Object> map = typedInstances.disposableSupplierObjects.get();
+                        map.add((DisposableSupplier) supplierT, t);
+                    }
                     Object ret = method.invoke(t, args);
                     return ret;
                 }
             });
             return proxy;
         } else {
-            return registerDisposableSupplierAndGet(supplier);
+            return registerDisposableSupplierAndGet(supplier.get(), typedInstances);
         }
     }
 
@@ -592,8 +656,8 @@ public final class NonInjectionManager implements InjectionManager {
     private class SingleRegisterSupplier<T> {
         private final LazyValue<T> once;
 
-        private SingleRegisterSupplier(Supplier<T> supplier) {
-            once = Values.lazy((Value<T>) () -> registerDisposableSupplierAndGet(supplier));
+        private SingleRegisterSupplier(Supplier<T> supplier, TypedInstances<?> instances) {
+            once = Values.lazy((Value<T>) () -> registerDisposableSupplierAndGet(supplier, instances));
         }
 
         T get() {
@@ -601,10 +665,10 @@ public final class NonInjectionManager implements InjectionManager {
         }
     }
 
-    private <T> T registerDisposableSupplierAndGet(Supplier<T> supplier) {
+    private <T> T registerDisposableSupplierAndGet(Supplier<T> supplier, TypedInstances<?> typedInstances) {
         T instance = supplier.get();
         if (DisposableSupplier.class.isInstance(supplier)) {
-            disposableSupplierObjects.add((DisposableSupplier<T>) supplier, instance);
+            typedInstances.disposableSupplierObjects.get().add((DisposableSupplier<T>) supplier, instance);
         }
         return instance;
     }
@@ -678,7 +742,7 @@ public final class NonInjectionManager implements InjectionManager {
      * @param <X> The expected return type for the TYPE.
      * @param <TYPE> The Type for which a {@link Binding} has been created.
      */
-    private abstract class XBindings<X, TYPE> {
+    private abstract class XBindings<X, TYPE extends Type> {
 
         protected final List<InstanceBinding<X>> instanceBindings = new LinkedList<>();
         protected final List<SupplierInstanceBinding<X>> supplierInstanceBindings = new LinkedList<>();
@@ -759,12 +823,8 @@ public final class NonInjectionManager implements InjectionManager {
 
         private X _create(SupplierInstanceBinding<X> binding) {
             Supplier<X> supplier = binding.getSupplier();
-            X t = registerDisposableSupplierAndGet(supplier);
-            if (Singleton.class.equals(binding.getScope())) {
-                _addInstance(t, binding);
-            } else if (_isPerThread(binding.getScope())) {
-                _addThreadInstance(t, binding);
-            }
+            X t = registerDisposableSupplierAndGet(supplier, instances);
+            t = addInstance(type, t, binding);
             return t;
         }
 
@@ -828,20 +888,17 @@ public final class NonInjectionManager implements InjectionManager {
 
         protected abstract X _createAndStore(ClassBinding<X> binding);
 
-        protected <T> T _addInstance(TYPE type, T instance, Binding<?, ?> binding) {
+        protected <T> T _addSingletonInstance(TYPE type, T instance, Binding<?, ?> binding) {
             return instances.addSingleton(type, instance, binding, instancesQualifiers);
         }
 
-        protected void _addThreadInstance(TYPE type, Object instance, Binding binding) {
-            instances.addThreadInstance(type, instance, binding, instancesQualifiers);
-        }
-
-        protected <T> T _addInstance(T instance, Binding<?, ?> binding) {
-            return instances.addSingleton(type, instance, binding, instancesQualifiers);
-        }
-
-        protected void _addThreadInstance(Object instance, Binding binding) {
-            instances.addThreadInstance(type, instance, binding, instancesQualifiers);
+        protected <T> T addInstance(TYPE type, T instance, Binding binding) {
+            if (Singleton.class.equals(binding.getScope())) {
+                instance = instances.addSingleton(type, instance, binding, instancesQualifiers);
+            } else if (_isPerThread(binding.getScope())) {
+                instances.addThreadInstance(type, instance, binding, instancesQualifiers);
+            }
+            return instance;
         }
     }
 
@@ -901,28 +958,27 @@ public final class NonInjectionManager implements InjectionManager {
         }
 
         protected T _create(SupplierClassBinding<T> binding) {
-            Supplier<T> supplier = instances.getInstance(binding.getSupplierClass(), null);
-            if (supplier == null) {
-                supplier = justCreate(binding.getSupplierClass());
-                if (Singleton.class.equals(binding.getSupplierScope())) {
-                    supplier = instances.addSingleton(binding.getSupplierClass(), supplier, binding, null);
-                } else if (_isPerThread(binding.getSupplierScope())) {
-                    instances.addThreadInstance(binding.getSupplierClass(), supplier, binding, null);
+            Supplier<Supplier<T>> supplierSupplier = () -> {
+                Supplier<T> supplier = instances.getInstance(binding.getSupplierClass(), null);
+                if (supplier == null) {
+                    supplier = justCreate(binding.getSupplierClass());
+                    if (Singleton.class.equals(binding.getSupplierScope())) {
+                        supplier = instances.addSingleton(binding.getSupplierClass(), supplier, binding, null);
+                    } else if (_isPerThread(binding.getSupplierScope()) || binding.getSupplierScope() == null) {
+                        instances.addThreadInstance(binding.getSupplierClass(), supplier, binding, null);
+                    }
                 }
-            }
+                return supplier;
+            };
 
-            T t = createSupplierProxyIfNeeded(binding.isProxiable(), (Class<T>) type, supplier);
-            if (Singleton.class.equals(binding.getScope())) {
-                t = _addInstance(type, t, binding);
-            } else if (_isPerThread(binding.getScope())) {
-                _addThreadInstance(type, t, binding);
-            }
+            T t = createSupplierProxyIfNeeded(binding.isProxiable(), (Class<T>) type, supplierSupplier, instances);
+//            t = addInstance(type, t, binding); The supplier here creates instances that ought not to be registered as beans
             return t;
         }
 
         protected T _createAndStore(ClassBinding<T> binding) {
             T result = justCreate(binding.getService());
-            result = _addInstance(binding.getService(), result, binding);
+            result = addInstance(binding.getService(), result, binding);
             return result;
         }
     }
@@ -935,19 +991,15 @@ public final class NonInjectionManager implements InjectionManager {
         protected T _create(SupplierClassBinding<T> binding) {
             Supplier<T> supplier = justCreate(binding.getSupplierClass());
 
-            T t = registerDisposableSupplierAndGet(supplier);
-            if (Singleton.class.equals(binding.getScope())) {
-                t = _addInstance(type, t, binding);
-            } else if (_isPerThread(binding.getScope())) {
-                _addThreadInstance(type, t, binding);
-            }
+            T t = registerDisposableSupplierAndGet(supplier, instances);
+            t = addInstance(type, t, binding);
             return t;
         }
 
         @Override
         protected T _createAndStore(ClassBinding<T> binding) {
             T result = justCreate(binding.getService());
-            result = _addInstance(type, result, binding);
+            result = addInstance(type, result, binding);
             return result;
         }
 
@@ -968,7 +1020,7 @@ public final class NonInjectionManager implements InjectionManager {
                                     return NonInjectionManager.this.getInstance(actualTypeArgument);
                                 }
                             }
-                        });
+                        }, instances);
 
                         @Override
                         public Object get() {
@@ -991,12 +1043,15 @@ public final class NonInjectionManager implements InjectionManager {
         private final T instance;
         private final Binding<?, ?> binding;
         private final Annotation[] createdWithQualifiers;
+        private boolean destroyed = false;
 
-        private InstanceContext(T instance, Binding<?, ?> binding, Annotation[] qualifiers) {
+        private InstanceContext(T instance, Binding<?, ?> binding, Annotation[] qualifiers, boolean destroyed) {
             this.instance = instance;
             this.binding = binding;
             this.createdWithQualifiers = qualifiers;
+            this.destroyed = destroyed;
         }
+
 
         public Binding<?, ?> getBinding() {
             return binding;
@@ -1004,6 +1059,13 @@ public final class NonInjectionManager implements InjectionManager {
 
         public T getInstance() {
             return instance;
+        }
+
+        public void destroy(NonInjectionManager nonInjectionManager) {
+            if (!destroyed) {
+                destroyed = true;
+                nonInjectionManager.preDestroy(instance);
+            }
         }
 
         @SuppressWarnings("unchecked")
@@ -1022,6 +1084,15 @@ public final class NonInjectionManager implements InjectionManager {
                         .filter(instance -> instance.hasQualifiers(qualifiers))
                         .collect(Collectors.toList())
                     : null;
+        }
+
+        private static List<InstanceContext<?>> merge(List<InstanceContext<?>> i1, List<InstanceContext<?>> i2) {
+            if (i1 == null) {
+                i1 = i2;
+            } else if (i2 != null) {
+                i1.addAll(i2);
+            }
+            return i1;
         }
 
         private boolean hasQualifiers(Annotation[] requested) {
