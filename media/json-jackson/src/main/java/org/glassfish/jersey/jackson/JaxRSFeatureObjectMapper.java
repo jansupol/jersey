@@ -20,9 +20,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.jersey.jackson.internal.AbstractObjectMapper;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.cfg.JaxRSFeature;
 
-public class JaxRSObjectMapper extends AbstractObjectMapper {
+public class JaxRSFeatureObjectMapper extends AbstractObjectMapper {
 
-    public JaxRSObjectMapper() {
+    public JaxRSFeatureObjectMapper() {
         super();
     }
 
