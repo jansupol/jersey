@@ -130,7 +130,7 @@ public final class CommittingOutputStream extends OutputStream {
     }
 
     /* package */ void flushOnClose() throws IOException {
-        if (!FlushedCloseable.class.isInstance(adaptedOutput)) {
+        if (!FlushedCloseable.flushOnClose(adaptedOutput)) {
             flush();
         }
     }

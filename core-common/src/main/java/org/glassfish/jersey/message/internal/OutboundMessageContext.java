@@ -562,7 +562,7 @@ public class OutboundMessageContext extends MessageHeaderMethods {
         if (hasEntity()) {
             try {
                 final OutputStream es = getEntityStream();
-                if (!FlushedCloseable.class.isInstance(es)) {
+                if (!FlushedCloseable.flushOnClose(es)) {
                     if (CommittingOutputStream.class.isInstance(es)) {
                         ((CommittingOutputStream) es).flushOnClose();
                     } else {
