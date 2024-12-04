@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Internal holder class for {@link JaxRSFeature} settings and their values.
+ */
 public class JaxrsFeatureBag<T extends JaxrsFeatureBag> {
     protected static final String JAXRS_FEATURE = "jersey.config.jackson.jaxrs.feature";
 

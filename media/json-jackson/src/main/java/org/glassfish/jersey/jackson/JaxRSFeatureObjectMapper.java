@@ -20,6 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.jersey.jackson.internal.AbstractObjectMapper;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.cfg.JaxRSFeature;
 
+
+/**
+ * The Jackson {@link ObjectMapper} supporting {@link JaxRSFeature}s.
+ */
 public class JaxRSFeatureObjectMapper extends AbstractObjectMapper {
 
     public JaxRSFeatureObjectMapper() {

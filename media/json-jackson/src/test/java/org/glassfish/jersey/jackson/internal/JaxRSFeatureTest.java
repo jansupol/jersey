@@ -18,7 +18,7 @@ package org.glassfish.jersey.jackson.internal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.jersey.jackson.JacksonFeature;
-import org.glassfish.jersey.jackson.JaxRSObjectMapper;
+import org.glassfish.jersey.jackson.JaxRSFeatureObjectMapper;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.cfg.JaxRSFeature;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -88,7 +88,7 @@ public class JaxRSFeatureTest {
 
         @Override
         public ObjectMapper getContext(Class<?> type) {
-            JaxRSObjectMapper objectMapper = new JaxRSObjectMapper();
+            JaxRSFeatureObjectMapper objectMapper = new JaxRSFeatureObjectMapper();
             objectMapper.disable(JaxRSFeature.READ_FULL_STREAM);
             return objectMapper;
         }
