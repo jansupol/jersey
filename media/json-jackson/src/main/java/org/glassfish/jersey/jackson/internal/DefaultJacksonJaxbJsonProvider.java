@@ -18,7 +18,6 @@ package org.glassfish.jersey.jackson.internal;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.json.PackageVersion;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.Module;
@@ -41,6 +40,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.ext.Providers;
 
 /**
@@ -53,8 +53,7 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
 
     @Inject
     public DefaultJacksonJaxbJsonProvider(@Context Providers providers, @Context Configuration config) {
-        this.commonConfig = config;
-        _providers = providers;
+        this(providers, config, DEFAULT_ANNOTATIONS);
     }
 
     //do not register JaxbAnnotationModule because it brakes default annotations processing
@@ -64,6 +63,20 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
         super(annotationsToUse);
         this.commonConfig = config;
         _providers = providers;
+
+        Object jaxrsFeatureBag = config.getProperty(JaxrsFeatureBag.JAXRS_FEATURE);
+        if (jaxrsFeatureBag != null && (JaxrsFeatureBag.class.isInstance(jaxrsFeatureBag))) {
+            ((JaxrsFeatureBag) jaxrsFeatureBag).configureJaxrsFeatures(this);
+        }
+    }
+
+    @Override
+    protected ObjectMapper _locateMapperViaProvider(Class<?> type, MediaType mediaType) {
+        ObjectMapper mapper = super._locateMapperViaProvider(type, mediaType);
+        if (AbstractObjectMapper.class.isInstance(mapper)) {
+            ((AbstractObjectMapper) mapper).jaxrsFeatureBag.configureJaxrsFeatures(this);
+        }
+        return mapper;
     }
 
     @Override
