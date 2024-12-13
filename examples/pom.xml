@@ -70,7 +70,6 @@
         <!--<module>feed-combiner-java8-webapp</module>-->
         <module>freemarker-webapp</module>
         <!--<module>flight-mgmt-webapp</module>-->
-        <module>groovy</module>
         <module>helloworld</module>
         <module>helloworld-benchmark</module>
         <module>helloworld-cdi2-se</module>
@@ -281,5 +280,16 @@
             </resource>
         </resources>
     </build>
+    <profiles>
+        <profile>
+            <id>GROOVY-EXAMPLE</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <modules>
+                <module>groovy</module>
+            </modules>
+        </profile>
+    </profiles>
 
 </project>

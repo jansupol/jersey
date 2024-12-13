@@ -83,7 +83,7 @@
             <plugin>
                 <groupId>org.codehaus.gmavenplus</groupId>
                 <artifactId>gmavenplus-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>4.0.1</version>
                 <executions>
                     <execution>
                         <id>1</id>
@@ -99,10 +99,12 @@
                             <goal>removeTestStubs</goal>
                             <goal>groovydoc</goal>
                         </goals>
+                        <configuration>
+                            <targetBytecode>11</targetBytecode>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>

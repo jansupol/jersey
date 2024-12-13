@@ -2183,7 +2183,7 @@
         <resources.mvn.plugin.version>3.3.1</resources.mvn.plugin.version>
         <shade.mvn.plugin.version>3.6.0</shade.mvn.plugin.version>
         <source.mvn.plugin.version>3.3.1</source.mvn.plugin.version>
-        <surefire.mvn.plugin.version>3.3.1</surefire.mvn.plugin.version>
+        <surefire.mvn.plugin.version>3.5.2</surefire.mvn.plugin.version>
         <war.mvn.plugin.version>3.4.0</war.mvn.plugin.version>
         <wiremock.mvn.plugin.version>2.11.0</wiremock.mvn.plugin.version>
         <xml.mvn.plugin.version>1.1.0</xml.mvn.plugin.version>
@@ -2209,7 +2209,7 @@
         <findbugs.glassfish.version>1.7</findbugs.glassfish.version>
         <freemarker.version>2.3.33</freemarker.version>
         <gae.version>2.0.29</gae.version>
-        <groovy.version>4.0.22</groovy.version>
+        <groovy.version>5.0.0-alpha-11</groovy.version>
         <gson.version>2.11.0</gson.version>
         <guava.version>33.3.0-jre</guava.version>
         <hamcrest.version>3.0</hamcrest.version>
