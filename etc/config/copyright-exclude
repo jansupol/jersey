@@ -93,3 +93,4 @@ NOTICE.md
 /media/json-binding/src/test/java/org/glassfish/jersey/jsonb/internal/JsonBindingProviderTest.java
 /connectors/jdk-connector/src/test/resources
 /tools
+/media/multipart/src/test/resources/multipart
