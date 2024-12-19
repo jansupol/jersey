@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,9 @@
 
 package org.glassfish.jersey.client;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -26,6 +28,7 @@ import jakarta.ws.rs.ext.WriterInterceptor;
 
 import jakarta.inject.Provider;
 
+import org.glassfish.jersey.innate.spi.MessageBodyWorkersSettable;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.internal.inject.Providers;
 import org.glassfish.jersey.internal.util.collection.Ref;
@@ -80,6 +83,21 @@ public class RequestProcessingInitializationStage implements Function<ClientRequ
         requestContext.setWriterInterceptors(writerInterceptors);
         requestContext.setReaderInterceptors(readerInterceptors);
 
+        if (requestContext.getEntity() != null) {
+            setWorkers(requestContext.getEntity());
+        }
+
         return requestContext;
+    }
+
+    private void setWorkers(Object entity) {
+        if (MessageBodyWorkersSettable.class.isInstance(entity)) {
+            ((MessageBodyWorkersSettable) entity).setMessageBodyWorkers(workersProvider);
+        } else if (Collection.class.isInstance(entity)) {
+            Iterator it = ((Collection) entity).iterator();
+            while (it.hasNext()) {
+                setWorkers(it.next());
+            }
+        }
     }
 }

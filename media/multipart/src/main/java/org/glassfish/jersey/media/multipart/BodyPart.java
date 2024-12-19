@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2021 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,10 +16,13 @@
 
 package org.glassfish.jersey.media.multipart;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.text.ParseException;
+import java.util.Arrays;
 
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.GenericType;
@@ -28,6 +31,7 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.Providers;
 
+import org.glassfish.jersey.innate.spi.MessageBodyWorkersSettable;
 import org.glassfish.jersey.internal.util.collection.ImmutableMultivaluedMap;
 import org.glassfish.jersey.media.multipart.internal.LocalizationMessages;
 import org.glassfish.jersey.message.MessageBodyWorkers;
@@ -41,7 +45,7 @@ import org.glassfish.jersey.message.internal.ParameterizedHeader;
  * @author Paul Sandoz
  * @author Michal Gajdos
  */
-public class BodyPart {
+public class BodyPart implements MessageBodyWorkersSettable {
 
     protected ContentDisposition contentDisposition = null;
 
@@ -285,7 +289,15 @@ public class BodyPart {
     }
 
     <T> T getEntityAs(final Class<T> type, Type genericType) {
-        if (entity == null || !(entity instanceof BodyPartEntity)) {
+        InputStream inputStream = null;
+        if (BodyPartEntity.class.isInstance(entity)) {
+            inputStream = ((BodyPartEntity) entity).getInputStream();
+        } else if (InputStream.class.isInstance(entity)) {
+            inputStream = (InputStream) entity;
+        } else if (byte[].class.isInstance(entity)) {
+            inputStream = new ByteArrayInputStream((byte[]) entity);
+        }
+        if (inputStream == null) {
             throw new IllegalStateException(LocalizationMessages.ENTITY_HAS_WRONG_TYPE());
         }
         if (type == BodyPartEntity.class) {
@@ -299,8 +311,7 @@ public class BodyPart {
         }
 
         try {
-            return reader.readFrom(type, genericType, annotations, mediaType, headers,
-                    ((BodyPartEntity) entity).getInputStream());
+            return reader.readFrom(type, genericType, annotations, mediaType, headers, inputStream);
         } catch (final IOException ioe) {
             throw new ProcessingException(LocalizationMessages.ERROR_READING_ENTITY(String.class), ioe);
         }
