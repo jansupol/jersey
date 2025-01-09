@@ -18,7 +18,6 @@ package org.glassfish.jersey.jackson.internal;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.StreamReadConstraints;
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.json.PackageVersion;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.Module;
@@ -41,6 +40,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Configuration;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.Providers;
 
 /**
@@ -53,9 +53,7 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
 
     @Inject
     public DefaultJacksonJaxbJsonProvider(@Context Providers providers, @Context Configuration config) {
-        super(new JacksonMapperConfigurator(null, DEFAULT_ANNOTATIONS));
-        this.commonConfig = config;
-        _providers = providers;
+        this(providers, config, DEFAULT_ANNOTATIONS);
     }
 
     //do not register JaxbAnnotationModule because it brakes default annotations processing
@@ -65,6 +63,20 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
         super(new JacksonMapperConfigurator(null, annotationsToUse));
         this.commonConfig = config;
         _providers = providers;
+
+        Object jaxrsFeatureBag = config.getProperty(JaxrsFeatureBag.JAXRS_FEATURE);
+        if (jaxrsFeatureBag != null && (JaxrsFeatureBag.class.isInstance(jaxrsFeatureBag))) {
+            ((JaxrsFeatureBag) jaxrsFeatureBag).configureJaxrsFeatures(this);
+        }
+    }
+
+    @Override
+    protected ObjectMapper _locateMapperViaProvider(Class<?> type, MediaType mediaType) {
+        ObjectMapper mapper = super._locateMapperViaProvider(type, mediaType);
+        if (AbstractObjectMapper.class.isInstance(mapper)) {
+            ((AbstractObjectMapper) mapper).jaxrsFeatureBag.configureJaxrsFeatures(this);
+        }
+        return mapper;
     }
 
     @Override

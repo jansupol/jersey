@@ -18,6 +18,7 @@ package org.glassfish.jersey.message.internal;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -27,8 +28,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import jakarta.ws.rs.core.Configuration;
@@ -557,6 +556,7 @@ public class OutboundMessageContext extends MessageHeaderMethods {
 
     /**
      * Closes the context. Flushes and closes the entity stream.
+     * @throws UncheckedIOException if IO errors
      */
     public void close() {
         if (hasEntity()) {
@@ -567,11 +567,7 @@ public class OutboundMessageContext extends MessageHeaderMethods {
                 }
                 es.close();
             } catch (IOException e) {
-                // Happens when the client closed connection before receiving the full response.
-                // This is OK and not interesting in the vast majority of the cases
-                // hence the log level set to FINE to make sure it does not flood the log unnecessarily
-                // (especially for clients disconnecting from SSE listening, which is very common).
-                Logger.getLogger(OutboundMessageContext.class.getName()).log(Level.FINE, e.getMessage(), e);
+                throw new UncheckedIOException(e);
             } finally {
                 // In case some of the output stream wrapper does not delegate close() call we
                 // close the root stream manually to make sure it commits the data.
@@ -579,8 +575,7 @@ public class OutboundMessageContext extends MessageHeaderMethods {
                     try {
                         committingOutputStream.close();
                     } catch (IOException e) {
-                        // Just log the exception
-                        Logger.getLogger(OutboundMessageContext.class.getName()).log(Level.FINE, e.getMessage(), e);
+                        throw new UncheckedIOException(e);
                     }
                 }
             }

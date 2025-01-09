@@ -36,7 +36,6 @@
     </description>
 
     <properties>
-<!--        <groovy.version>3.0.21</groovy.version>-->
         <groovy-eclipse-compiler.version>3.7.0</groovy-eclipse-compiler.version>
         <groovy-eclipse-batch.version>3.0.8-01</groovy-eclipse-batch.version>
         <maven.version>3.9.2</maven.version>

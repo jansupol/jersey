@@ -40,6 +40,8 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ParamConverterDateTest extends AbstractTest {
+    private final String format = "EEE MMM dd HH:mm:ss Z yyyy";
+    private final SimpleDateFormat formatter = new SimpleDateFormat(format, new Locale("US"));
 
     @Path("/")
     public static class DateResource {
@@ -55,7 +57,7 @@ public class ParamConverterDateTest extends AbstractTest {
     public void testDateResource() throws ExecutionException, InterruptedException {
         initiateWebApplication(getBinder(), ParamConverterDateTest.DateResource.class);
         final ContainerResponse responseContext = getResponseContext(UriBuilder.fromPath("/")
-                .queryParam("d", new Date()).build().toString());
+                .queryParam("d", formatter.format(new Date())).build().toString());
 
         assertEquals(200, responseContext.getStatus());
     }
@@ -80,8 +82,6 @@ public class ParamConverterDateTest extends AbstractTest {
                                     );
                                 }
                                 try {
-                                    final String format = "EEE MMM dd HH:mm:ss Z yyyy";
-                                    final SimpleDateFormat formatter = new SimpleDateFormat(format, new Locale("US"));
                                     return rawType.cast(formatter.parse(value));
                                 } catch (final ParseException ex) {
                                     throw new ExtractorException(ex);

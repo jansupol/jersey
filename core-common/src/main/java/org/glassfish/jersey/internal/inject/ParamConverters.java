@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018 Payara Foundation and/or its affiliates.
  *
  * This program and the accompanying materials are made available under the
@@ -125,7 +125,7 @@ public class ParamConverters {
     @Singleton
     public static class StringConstructor extends ParamConverterCompliance implements ParamConverterProvider {
 
-        private StringConstructor(boolean canReturnNull) {
+        protected StringConstructor(boolean canReturnNull) {
             super(canReturnNull);
         }
 
@@ -154,7 +154,7 @@ public class ParamConverters {
     @Singleton
     public static class TypeValueOf extends ParamConverterCompliance implements ParamConverterProvider {
 
-        private TypeValueOf(boolean canReturnNull) {
+        protected TypeValueOf(boolean canReturnNull) {
             super(canReturnNull);
         }
 
@@ -182,7 +182,7 @@ public class ParamConverters {
     @Singleton
     public static class TypeFromString extends ParamConverterCompliance implements ParamConverterProvider {
 
-        private TypeFromString(boolean canReturnNull) {
+        protected TypeFromString(boolean canReturnNull) {
             super(canReturnNull);
         }
 
@@ -210,7 +210,7 @@ public class ParamConverters {
     @Singleton
     public static class TypeFromStringEnum extends TypeFromString {
 
-        private TypeFromStringEnum(boolean canReturnNull) {
+        protected TypeFromStringEnum(boolean canReturnNull) {
             super(canReturnNull);
         }
 
@@ -225,7 +225,7 @@ public class ParamConverters {
     @Singleton
     public static class CharacterProvider extends ParamConverterCompliance implements ParamConverterProvider {
 
-        private CharacterProvider(boolean canReturnNull) {
+        protected CharacterProvider(boolean canReturnNull) {
             super(canReturnNull);
         }
 
@@ -270,7 +270,7 @@ public class ParamConverters {
     @Singleton
     public static class DateProvider extends ParamConverterCompliance implements ParamConverterProvider {
 
-        private DateProvider(boolean canReturnNull) {
+        protected DateProvider(boolean canReturnNull) {
             super(canReturnNull);
         }
 
@@ -346,7 +346,7 @@ public class ParamConverters {
         // Delegates to this provider when the type of Optional is extracted.
         private final InjectionManager manager;
 
-        public OptionalCustomProvider(InjectionManager manager, boolean canReturnNull) {
+        protected OptionalCustomProvider(InjectionManager manager, boolean canReturnNull) {
             super(canReturnNull);
             this.manager = manager;
         }
@@ -401,6 +401,8 @@ public class ParamConverters {
      */
     @Singleton
     public static class OptionalProvider implements ParamConverterProvider {
+
+        protected OptionalProvider() {}
 
         @Override
         public <T> ParamConverter<T> getConverter(Class<T> rawType, Type genericType, Annotation[] annotations) {

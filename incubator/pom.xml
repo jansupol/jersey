@@ -39,7 +39,6 @@
         <module>cdi-inject-weld</module>
         <module>declarative-linking</module>
         <module>gae-integration</module>
-        <module>html-json</module>
         <module>injectless-client</module>
         <module>kryo</module>
         <module>open-tracing</module>
@@ -53,4 +52,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>HTML-JSON-FOR-PRE-JDK24</id>
+            <activation>
+                <jdk>[11, 24)</jdk>
+            </activation>
+            <modules>
+                <module>html-json</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>

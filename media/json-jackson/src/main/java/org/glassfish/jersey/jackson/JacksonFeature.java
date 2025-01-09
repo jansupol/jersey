@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -29,8 +29,10 @@ import org.glassfish.jersey.internal.util.PropertiesHelper;
 import org.glassfish.jersey.jackson.internal.DefaultJacksonJaxbJsonProvider;
 import org.glassfish.jersey.jackson.internal.FilteringJacksonJaxbJsonProvider;
 import org.glassfish.jersey.jackson.internal.JacksonFilteringFeature;
+import org.glassfish.jersey.jackson.internal.JaxrsFeatureBag;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.base.JsonMappingExceptionMapper;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.base.JsonParseExceptionMapper;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.cfg.JaxRSFeature;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.glassfish.jersey.message.MessageProperties;
 import org.glassfish.jersey.message.filtering.EntityFilteringFeature;
@@ -41,7 +43,7 @@ import org.glassfish.jersey.message.filtering.EntityFilteringFeature;
  * @author Stepan Kopriva
  * @author Michal Gajdos
  */
-public class JacksonFeature implements Feature {
+public class JacksonFeature extends JaxrsFeatureBag<JacksonFeature> implements Feature {
 
     /**
      * Define whether to use Jackson's exception mappers ore not
@@ -100,6 +102,16 @@ public class JacksonFeature implements Feature {
         return this;
     }
 
+    /**
+     * Register {@link JaxRSFeature} with the Jackson providers.
+     * @param feature the {@link JaxRSFeature} to be enabled or disabled.
+     * @param state {@code true} for enabling the feature, {@code false} for disabling.
+     * @return JacksonFeature with {@link JaxRSFeature} registered to be set on a created Jackson provider.
+     */
+    public JacksonFeature jaxrsFeature(JaxRSFeature feature, boolean state) {
+        return super.jaxrsFeature(feature, state);
+    }
+
     private static final String JSON_FEATURE = JacksonFeature.class.getSimpleName();
 
     @Override
@@ -136,6 +148,10 @@ public class JacksonFeature implements Feature {
 
         if (config.getProperty(MessageProperties.JSON_MAX_STRING_LENGTH) == null) {
             context.property(MessageProperties.JSON_MAX_STRING_LENGTH, maxStringLength);
+        }
+
+        if (hasJaxrsFeature()) {
+            context.property(JaxrsFeatureBag.JAXRS_FEATURE, this);
         }
 
         return true;

@@ -107,6 +107,15 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <id>securityOff</id>
+            <activation>
+                <jdk>[24,)</jdk>
+            </activation>
+            <properties>
+                <surefire.security.argline />
+            </properties>
+        </profile>
     </profiles>
 
     <properties>
