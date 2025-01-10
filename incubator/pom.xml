@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2011, 2024 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2011, 2025 Oracle and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
     terms of the Eclipse Public License v. 2.0, which is available at
@@ -39,7 +39,6 @@
         <module>cdi-inject-weld</module>
         <module>declarative-linking</module>
         <module>gae-integration</module>
-        <module>html-json</module>
         <module>injectless-client</module>
         <module>kryo</module>
         <module>open-tracing</module>
@@ -53,4 +52,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>HTML-JSON-FOR-PRE-JDK24</id>
+            <activation>
+                <jdk>[11, 24)</jdk>
+            </activation>
+            <modules>
+                <module>html-json</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,20 +20,28 @@ import org.glassfish.jersey.internal.util.ExtendedLogger;
 import org.glassfish.jersey.internal.util.LazyUid;
 import org.glassfish.jersey.process.internal.RequestScope;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class NonInjectionRequestScope extends RequestScope {
+
+    private final NonInjectionManager nonInjectionManager;
+
+    public NonInjectionRequestScope(NonInjectionManager nonInjectionManager) {
+        this.nonInjectionManager = nonInjectionManager;
+    }
+
     @Override
     public org.glassfish.jersey.process.internal.RequestContext createContext() {
-        return new Instance();
+        return new Instance(nonInjectionManager);
     }
 
     /**
      * Implementation of the request scope instance.
      */
     public static final class Instance implements org.glassfish.jersey.process.internal.RequestContext {
+
+        private final NonInjectionManager injectionManager;
 
         private static final ExtendedLogger logger = new ExtendedLogger(Logger.getLogger(Instance.class.getName()), Level.FINEST);
 
@@ -48,10 +56,11 @@ public class NonInjectionRequestScope extends RequestScope {
         /**
          * Holds the number of snapshots of this scope.
          */
-        private final AtomicInteger referenceCounter;
+        private int referenceCounter;
 
-        private Instance() {
-            this.referenceCounter = new AtomicInteger(1);
+        private Instance(NonInjectionManager injectionManager) {
+            this.injectionManager = injectionManager;
+            this.referenceCounter = 1;
         }
 
         /**
@@ -65,7 +74,7 @@ public class NonInjectionRequestScope extends RequestScope {
         @Override
         public NonInjectionRequestScope.Instance getReference() {
             // TODO: replace counter with a phantom reference + reference queue-based solution
-            referenceCounter.incrementAndGet();
+            referenceCounter++;
             return this;
         }
 
@@ -77,7 +86,9 @@ public class NonInjectionRequestScope extends RequestScope {
          */
         @Override
         public void release() {
-            referenceCounter.decrementAndGet();
+            if (0 == --referenceCounter) {
+                injectionManager.disposeRequestScopedInstances();
+            }
         }
 
         @Override

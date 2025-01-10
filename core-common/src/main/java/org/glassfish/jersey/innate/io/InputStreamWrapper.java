@@ -18,6 +18,7 @@ package org.glassfish.jersey.innate.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Generic wrapper template for InputStream.
@@ -53,6 +54,22 @@ public abstract class InputStreamWrapper extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         return getWrappedIOE().read(b, off, len);
     }
+
+    @Override
+    public byte[] readAllBytes() throws IOException {
+        return getWrappedIOE().readAllBytes();
+    }
+
+    @Override
+    public int readNBytes(byte[] b, int off, int len) throws IOException {
+        return getWrappedIOE().readNBytes(b, off, len);
+    }
+
+    @Override
+    public long transferTo(OutputStream out) throws IOException {
+        return getWrappedIOE().transferTo(out);
+    }
+
 
     @Override
     public long skip(long n) throws IOException {

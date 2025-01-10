@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, 2024 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -24,16 +24,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.RequestEntityProcessing;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.netty.connector.internal.RedirectException;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -60,6 +64,11 @@ public class FollowRedirectsTest extends JerseyTest {
             return "GET";
         }
 
+        @POST
+        public String post() {
+            return "POST";
+        }
+
         @GET
         @Path("redirect")
         public Response redirect() {
@@ -76,6 +85,12 @@ public class FollowRedirectsTest extends JerseyTest {
         @Path("redirect2")
         public Response redirect2() {
             return Response.seeOther(URI.create(TEST_URL_REF.get() + "/redirect")).build();
+        }
+
+        @POST
+        @Path("status307")
+        public Response status307() {
+            return Response.temporaryRedirect(URI.create(TEST_URL_REF.get())).build();
         }
     }
 
@@ -168,5 +183,16 @@ public class FollowRedirectsTest extends JerseyTest {
         Response r = t.request().get();
         assertEquals(200, r.getStatus());
         assertEquals("GET", r.readEntity(String.class));
+    }
+
+    @Test
+    public void testRedirect307PostBuffered() {
+        try (Response response = target("test/status307")
+                .property(ClientProperties.FOLLOW_REDIRECTS, true)
+                .property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED)
+                .request().post(Entity.entity("Something", MediaType.TEXT_PLAIN_TYPE))) {
+            assertEquals(200, response.getStatus());
+            assertEquals("POST", response.readEntity(String.class));
+        }
     }
 }
