@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -50,6 +50,7 @@ import javax.ws.rs.ext.Providers;
 public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
     private Configuration commonConfig;
     private static final Logger LOGGER = Logger.getLogger(DefaultJacksonJaxbJsonProvider.class.getName());
+    private final boolean hasConfig;
 
     @Inject
     public DefaultJacksonJaxbJsonProvider(@Context Providers providers, @Context Configuration config) {
@@ -57,17 +58,25 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
     }
 
     //do not register JaxbAnnotationModule because it brakes default annotations processing
-    private static final String EXCLUDE_MODULE_NAME = "JaxbAnnotationModule";
+    private static final String[] EXCLUDE_MODULE_NAMES = {"JaxbAnnotationModule", "JakartaXmlBindAnnotationModule"};
 
     public DefaultJacksonJaxbJsonProvider(Providers providers, Configuration config, Annotations... annotationsToUse) {
         super(annotationsToUse);
         this.commonConfig = config;
         _providers = providers;
 
-        Object jaxrsFeatureBag = config.getProperty(JaxrsFeatureBag.JAXRS_FEATURE);
-        if (jaxrsFeatureBag != null && (JaxrsFeatureBag.class.isInstance(jaxrsFeatureBag))) {
-            ((JaxrsFeatureBag) jaxrsFeatureBag).configureJaxrsFeatures(this);
+        boolean ex = true;
+        try {
+            Object jaxrsFeatureBag = config.getProperty(JaxrsFeatureBag.JAXRS_FEATURE);
+            if (jaxrsFeatureBag != null && (JaxrsFeatureBag.class.isInstance(jaxrsFeatureBag))) {
+                ((JaxrsFeatureBag) jaxrsFeatureBag).configureJaxrsFeatures(this);
+            }
+        } catch (RuntimeException e) {
+            // ignore - not configured
+            LOGGER.fine(LocalizationMessages.ERROR_CONFIGURING(e.getMessage()));
+            ex = false;
         }
+        hasConfig = ex;
     }
 
     @Override
@@ -82,7 +91,9 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
     @Override
     protected JsonEndpointConfig _configForReading(ObjectReader reader, Annotation[] annotations) {
         try {
-            updateFactoryConstraints(reader.getFactory());
+            if (hasConfig) {
+                updateFactoryConstraints(reader.getFactory());
+            }
         } catch (Throwable t) {
             // A Jackson 14 would throw NoSuchMethodError, ClassNotFoundException, NoClassDefFoundError or similar
             // that should have been ignored
@@ -97,7 +108,7 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
         final ObjectMapper defaultMapper = _mapperConfig.getDefaultMapper();
         final ObjectMapper mapper = _mapperConfig.getConfiguredMapper();
 
-        final List<Module> modules = filterModules();
+        final List<Module> modules =  filterModules();
 
         defaultMapper.registerModules(modules);
         if (mapper != null) {
@@ -122,8 +133,9 @@ public class DefaultJacksonJaxbJsonProvider extends JacksonJaxbJsonProvider {
             LOGGER.warning(LocalizationMessages.ERROR_MODULES_NOT_LOADED(e.getMessage()));
             return Collections.emptyList();
         }
-
-        modules.removeIf(mod -> mod.getModuleName().contains(EXCLUDE_MODULE_NAME));
+        for (String exludeModuleName : EXCLUDE_MODULE_NAMES) {
+            modules.removeIf(mod -> mod.getModuleName().contains(exludeModuleName));
+        }
 
         if (enabledModules != null && !enabledModules.isEmpty()) {
             final List<String> enabledModulesList = Arrays.asList(enabledModules.split(","));
