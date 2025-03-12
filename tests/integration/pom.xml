@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2011, 2024 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2011, 2025 Oracle and/or its affiliates. All rights reserved.
     Copyright (c) 2018 Payara Foundation and/or its affiliates. All rights reserved.
 
     This program and the accompanying materials are made available under the
@@ -80,8 +80,8 @@
         <module>jersey-2846</module>
         <module>jersey-2878</module>
         <module>jersey-2892</module>
-	<module>jersey-3662</module>
-	<module>jersey-3796</module>
+        <module>jersey-3662</module>
+        <module>jersey-3796</module>
         <module>jersey-780</module>
         <module>jersey-3670</module>
         <module>jersey-3992</module>
@@ -98,6 +98,7 @@
         <module>portability-jersey-1</module>
         <module>portability-jersey-2</module>
         <module>property-check</module>
+        <module>resteasy-client</module>
         <module>security-digest</module>
         <module>servlet-2.5-autodiscovery-1</module>
         <module>servlet-2.5-autodiscovery-2</module>
