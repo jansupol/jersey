@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -45,6 +45,7 @@ import jakarta.ws.rs.ext.ReaderInterceptor;
 
 import javax.xml.transform.Source;
 
+import org.glassfish.jersey.innate.io.SafelyClosable;
 import org.glassfish.jersey.internal.LocalizationMessages;
 import org.glassfish.jersey.internal.PropertiesDelegate;
 import org.glassfish.jersey.internal.util.collection.GuardianStringKeyMultivaluedMap;
@@ -58,7 +59,7 @@ import org.glassfish.jersey.message.MessageBodyWorkers;
  *
  * @author Marek Potociar
  */
-public abstract class InboundMessageContext extends MessageHeaderMethods {
+public abstract class InboundMessageContext extends MessageHeaderMethods implements SafelyClosable {
 
     private static final InputStream EMPTY = new InputStream() {
 
@@ -720,6 +721,9 @@ public abstract class InboundMessageContext extends MessageHeaderMethods {
      */
     public void close() {
         entityContent.close(true);
+        if (workers != null) {
+            workers.close();
+        }
         setWorkers(null);
     }
 
