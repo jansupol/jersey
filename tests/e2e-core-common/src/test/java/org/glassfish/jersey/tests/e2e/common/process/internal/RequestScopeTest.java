@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2022 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -17,6 +17,8 @@
 package org.glassfish.jersey.tests.e2e.common.process.internal;
 
 import java.lang.reflect.Type;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.glassfish.jersey.inject.hk2.Hk2RequestScope;
 import org.glassfish.jersey.internal.inject.ForeignDescriptor;
@@ -25,6 +27,7 @@ import org.glassfish.jersey.process.internal.RequestScope;
 import org.glassfish.hk2.api.ServiceHandle;
 import org.glassfish.hk2.utilities.AbstractActiveDescriptor;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -138,6 +141,34 @@ public class RequestScopeTest {
         assertEquals("1", instance.get(inhab));
         instance.release();
         assertNull(instance.get(inhab));
+    }
+
+    @Test
+    public void testOrderOfRelease() {
+        final RequestScope requestScope = new Hk2RequestScope();
+        final AtomicInteger instanceRelease = new AtomicInteger(0);
+        final Hk2RequestScope.Instance instance = requestScope.runInScope(() -> {
+            final Hk2RequestScope.Instance internalInstance = (Hk2RequestScope.Instance) requestScope.current();
+            for (int index = 1; index != 10; index++) {
+                final int in = index;
+                TestProvider testProvider = new TestProvider(String.valueOf(in)) {
+                    @Override
+                    public int hashCode() {
+                        return super.hashCode() + in;
+                    }
+                };
+                final ForeignDescriptor fd = ForeignDescriptor.wrap(testProvider, new Consumer<Object>() {
+                    @Override
+                    public void accept(Object o) {
+                        instanceRelease.set(instanceRelease.get() * 10 + in);
+                    }
+                });
+                internalInstance.put(fd, String.valueOf(index));
+            }
+            return internalInstance;
+        });
+        instance.release();
+        Assertions.assertEquals(987654321, instanceRelease.get());
     }
 
     /**
