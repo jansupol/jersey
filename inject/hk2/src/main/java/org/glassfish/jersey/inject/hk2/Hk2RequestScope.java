@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,8 +16,9 @@
 
 package org.glassfish.jersey.inject.hk2;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -63,7 +64,7 @@ public class Hk2RequestScope extends RequestScope {
         private final AtomicInteger referenceCounter;
 
         private Instance() {
-            this.store = new HashMap<>();
+            this.store = new LinkedHashMap<>();
             this.referenceCounter = new AtomicInteger(1);
         }
 
@@ -140,7 +141,9 @@ public class Hk2RequestScope extends RequestScope {
         public void release() {
             if (referenceCounter.decrementAndGet() < 1) {
                 try {
-                    new HashSet<>(store.keySet()).forEach(this::remove);
+                    ArrayList<ForeignDescriptor> reverse = new ArrayList<>(store.keySet());
+                    Collections.reverse(reverse);
+                    reverse.forEach(this::remove);
                 } finally {
                     logger.debugLog("Released scope instance {0}", this);
                 }
