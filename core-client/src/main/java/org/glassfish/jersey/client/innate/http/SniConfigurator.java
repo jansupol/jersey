@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -61,7 +61,10 @@ final class SniConfigurator {
     static Optional<SniConfigurator> createWhenHostHeader(URI hostUri, String sniHost, boolean whenDiffer) {
         final String trimmedHeader;
         if (sniHost != null) {
-            int index = sniHost.indexOf(':'); // RFC 7230  Host = uri-host [ ":" port ] ;
+            int index = sniHost.lastIndexOf(':'); // RFC 7230  Host = uri-host [ ":" port ] ;
+            if (sniHost.indexOf(']', index) != -1) {
+                index = -1; // beware of ipv6 [:1] without port
+            }
             final String trimmedHeader0 = index != -1 ? sniHost.substring(0, index).trim() : sniHost.trim();
             trimmedHeader = trimmedHeader0.isEmpty() ? sniHost : trimmedHeader0;
         } else {
