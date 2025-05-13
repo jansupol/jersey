@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,12 +20,14 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.ClientRequest;
 import org.glassfish.jersey.http.HttpHeaders;
 import org.glassfish.jersey.internal.PropertiesResolver;
+import org.glassfish.jersey.internal.guava.InetAddresses;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.UriBuilder;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -233,7 +235,9 @@ public final class SSLParamConfigurator {
         String host = uri.getHost();
         try {
             InetAddress ip = InetAddress.getByName(host);
-            return UriBuilder.fromUri(uri).host(ip.getHostAddress()).build();
+            // ipv6 is expected in square brackets in UriBuilder#host()
+            final String hostAddress = ip instanceof Inet6Address ? '[' + ip.getHostAddress() + ']' : ip.getHostAddress();
+            return UriBuilder.fromUri(uri).host(hostAddress).build();
         } catch (UnknownHostException e) {
             return uri;
         }
