@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -42,4 +42,17 @@ public interface AsyncContextDelegate {
      * Invoked upon a response writing completion when the response write is either committed or canceled.
      */
     public void complete();
+
+    /**
+     * <p>
+     *     Return {@code true} when the AsyncContext is completed, such as when {@link #complete()} has been called.
+     * </p>
+     * <p>
+     *     For compatibility, the default is {@code false}.
+     * </p>
+     * @return {@code true} when the AsyncContext is completed.
+     */
+    public default boolean isCompleted() {
+        return false;
+    }
 }

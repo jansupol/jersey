@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,12 +16,15 @@
 
 package org.glassfish.jersey.servlet.async;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -70,7 +73,32 @@ public class AsyncContextDelegateProviderImpl implements AsyncContextDelegatePro
         public void suspend() throws IllegalStateException {
             // Suspend only if not completed and not suspended before.
             if (!completed.get() && asyncContextRef.get() == null) {
-                asyncContextRef.set(getAsyncContext());
+                final AsyncContext asyncContext = getAsyncContext();
+                asyncContext.addListener(new CompletedAsyncContextListener());
+                asyncContextRef.set(asyncContext);
+            }
+        }
+
+        private class CompletedAsyncContextListener implements AsyncListener {
+
+            @Override
+            public void onComplete(AsyncEvent event) throws IOException {
+                complete();
+            }
+
+            @Override
+            public void onTimeout(AsyncEvent event) throws IOException {
+
+            }
+
+            @Override
+            public void onError(AsyncEvent event) throws IOException {
+                complete();
+            }
+
+            @Override
+            public void onStartAsync(AsyncEvent event) throws IOException {
+
             }
         }
 
@@ -101,6 +129,11 @@ public class AsyncContextDelegateProviderImpl implements AsyncContextDelegatePro
             if (asyncContext != null) {
                 asyncContext.complete();
             }
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return completed.get();
         }
     }
 }
