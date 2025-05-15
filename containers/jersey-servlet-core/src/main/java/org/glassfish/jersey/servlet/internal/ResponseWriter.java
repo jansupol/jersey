@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -116,6 +116,10 @@ public class ResponseWriter implements ContainerResponseWriter {
     @Override
     public OutputStream writeResponseStatusAndHeaders(final long contentLength, final ContainerResponse responseContext)
             throws ContainerException {
+        if (asyncExt.isCompleted()) {
+            return null;
+        }
+
         this.responseContext.complete(responseContext);
 
         // first set the content length, so that if headers have an explicit value, it takes precedence over this one
