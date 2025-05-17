@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,7 +16,6 @@
 
 package org.glassfish.jersey.oauth1.signature;
 
-import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -24,6 +23,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.glassfish.jersey.uri.UriComponent;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 
 /**
@@ -78,11 +79,7 @@ public final class HmaSha1Method implements OAuth1SignatureMethod {
 
         byte[] key;
 
-        try {
-            key = buf.toString().getBytes("UTF-8");
-        } catch (UnsupportedEncodingException uee) {
-            throw new IllegalStateException(uee);
-        }
+        key = buf.toString().getBytes(UTF_8);
 
         SecretKeySpec spec = new SecretKeySpec(key, SIGNATURE_ALGORITHM);
 

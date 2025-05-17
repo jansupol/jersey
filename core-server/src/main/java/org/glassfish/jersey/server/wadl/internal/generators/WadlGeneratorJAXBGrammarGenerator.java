@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -22,6 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -360,7 +361,7 @@ public class WadlGeneratorJAXBGrammarGenerator implements WadlGenerator {
 
             for (final StreamResult result : results) {
                 final CharArrayWriter writer = (CharArrayWriter) result.getWriter();
-                final byte[] contents = writer.toString().getBytes("UTF8");
+                final byte[] contents = writer.toString().getBytes(StandardCharsets.UTF_8);
                 extraFiles.put(
                         result.getSystemId(),
                         new ApplicationDescription.ExternalGrammar(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -23,6 +23,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,7 +127,7 @@ public final class HtmlJsonProvider implements MessageBodyWriter<Object>, Messag
             }
             out.write(']');
         } else {
-            out.write(t.toString().getBytes("UTF-8"));
+            out.write(t.toString().getBytes(StandardCharsets.UTF_8));
         }
     }
 

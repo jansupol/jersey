@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,6 +18,7 @@ package org.glassfish.jersey.server.mvc.internal;
 
 import java.lang.annotation.Annotation;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,8 +44,6 @@ import org.glassfish.jersey.server.mvc.Viewable;
  * @author Michal Gajdos
  */
 public final class TemplateHelper {
-
-    private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-8");
 
     /**
      * Return an absolute path to the given class where segments are separated using {@code delim} character and {@code path}
@@ -138,7 +137,7 @@ public final class TemplateHelper {
         final String enc = PropertiesHelper.getValue(configuration.getProperties(), MvcFeature.ENCODING + suffix,
                 String.class, null);
         if (enc == null) {
-            return DEFAULT_ENCODING;
+            return StandardCharsets.UTF_8;
         } else {
             return Charset.forName(enc);
         }

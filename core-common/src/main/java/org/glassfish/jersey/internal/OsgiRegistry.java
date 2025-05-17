@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -56,6 +56,8 @@ import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleReference;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.SynchronousBundleListener;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Utility class to deal with OSGi runtime specific behavior.
@@ -210,7 +212,7 @@ public final class OsgiRegistry implements SynchronousBundleListener {
                 if (LOGGER.isLoggable(Level.FINEST)) {
                     LOGGER.log(Level.FINEST, "Loading providers for SPI: {0}", spi);
                 }
-                reader = new BufferedReader(new InputStreamReader(spiRegistryUrl.openStream(), "UTF-8"));
+                reader = new BufferedReader(new InputStreamReader(spiRegistryUrl.openStream(), UTF_8));
                 String providerClassName;
 
                 final List<Class<?>> providerClasses = new ArrayList<Class<?>>();

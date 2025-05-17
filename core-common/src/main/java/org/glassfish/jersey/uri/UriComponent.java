@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,13 +16,11 @@
 
 package org.glassfish.jersey.uri;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.Buffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -33,6 +31,8 @@ import jakarta.ws.rs.core.PathSegment;
 
 import org.glassfish.jersey.internal.LocalizationMessages;
 import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Utility class for validating, encoding and decoding components
@@ -333,7 +333,7 @@ public class UriComponent {
 
     private static void appendUTF8EncodedCharacter(final StringBuilder sb, final int codePoint) {
         final CharBuffer chars = CharBuffer.wrap(Character.toChars(codePoint));
-        final ByteBuffer bytes = UTF_8_CHARSET.encode(chars);
+        final ByteBuffer bytes = UTF_8.encode(chars);
 
         while (bytes.hasRemaining()) {
             appendPercentEncodedOctet(sb, bytes.get() & 0xFF);
@@ -423,8 +423,6 @@ public class UriComponent {
 
         return table;
     }
-
-    private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
     /**
      * Decodes characters of a string that are percent-encoded octets using
@@ -565,19 +563,14 @@ public class UriComponent {
     @SuppressWarnings("StatementWithEmptyBody")
     private static void decodeQueryParam(final MultivaluedMap<String, String> params, final String param,
                                          final boolean decodeNames, final boolean decodeValues) {
-        try {
-            final int equals = param.indexOf('=');
-            if (equals > 0) {
-                params.add((decodeNames) ? URLDecoder.decode(param.substring(0, equals), "UTF-8") : param.substring(0, equals),
-                        (decodeValues) ? URLDecoder.decode(param.substring(equals + 1), "UTF-8") : param.substring(equals + 1));
-            } else if (equals == 0) {
-                // no key declared, ignore
-            } else if (param.length() > 0) {
-                params.add((decodeNames) ? URLDecoder.decode(param, "UTF-8") : param, "");
-            }
-        } catch (final UnsupportedEncodingException ex) {
-            // This should never occur
-            throw new IllegalArgumentException(ex);
+        final int equals = param.indexOf('=');
+        if (equals > 0) {
+            params.add((decodeNames) ? URLDecoder.decode(param.substring(0, equals), UTF_8) : param.substring(0, equals),
+                    (decodeValues) ? URLDecoder.decode(param.substring(equals + 1), UTF_8) : param.substring(equals + 1));
+        } else if (equals == 0) {
+            // no key declared, ignore
+        } else if (param.length() > 0) {
+            params.add((decodeNames) ? URLDecoder.decode(param, UTF_8) : param, "");
         }
     }
 
@@ -853,7 +846,7 @@ public class UriComponent {
             return i + 2;
         } else {
             //
-            final CharBuffer cb = UTF_8_CHARSET.decode(bb);
+            final CharBuffer cb = UTF_8.decode(bb);
             sb.append(cb.toString());
             return i + ((Buffer) bb).limit() * 3 - 1;
         }

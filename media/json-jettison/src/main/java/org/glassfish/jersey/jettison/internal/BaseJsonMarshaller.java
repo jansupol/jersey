@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
@@ -39,8 +39,6 @@ import org.glassfish.jersey.jettison.JettisonMarshaller;
  * @author Michal Gajdos
  */
 public class BaseJsonMarshaller implements JettisonMarshaller, JettisonConfigured {
-
-    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     protected final Marshaller jaxbMarshaller;
     protected JettisonConfig jsonConfig;
@@ -67,7 +65,7 @@ public class BaseJsonMarshaller implements JettisonMarshaller, JettisonConfigure
             throw new IllegalArgumentException("The output stream is null");
         }
 
-        marshallToJSON(o, new OutputStreamWriter(outputStream, UTF8));
+        marshallToJSON(o, new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
     }
 
     public void marshallToJSON(Object o, Writer writer) throws JAXBException {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2020 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -19,7 +19,7 @@ package org.glassfish.jersey.jettison.internal;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBElement;
@@ -41,8 +41,6 @@ import org.glassfish.jersey.jettison.JettisonUnmarshaller;
  */
 public class BaseJsonUnmarshaller implements JettisonUnmarshaller, JettisonConfigured {
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
-
     protected final Unmarshaller jaxbUnmarshaller;
     protected final JettisonConfig jsonConfig;
 
@@ -62,7 +60,7 @@ public class BaseJsonUnmarshaller implements JettisonUnmarshaller, JettisonConfi
 
     // JsonUnmarshaller
     public <T> T unmarshalFromJSON(InputStream inputStream, Class<T> expectedType) throws JAXBException {
-        return unmarshalFromJSON(new InputStreamReader(inputStream, UTF8), expectedType);
+        return unmarshalFromJSON(new InputStreamReader(inputStream, StandardCharsets.UTF_8), expectedType);
     }
 
     @SuppressWarnings("unchecked")
@@ -75,7 +73,7 @@ public class BaseJsonUnmarshaller implements JettisonUnmarshaller, JettisonConfi
     }
 
     public <T> JAXBElement<T> unmarshalJAXBElementFromJSON(InputStream inputStream, Class<T> declaredType) throws JAXBException {
-        return unmarshalJAXBElementFromJSON(new InputStreamReader(inputStream, UTF8), declaredType);
+        return unmarshalJAXBElementFromJSON(new InputStreamReader(inputStream, StandardCharsets.UTF_8), declaredType);
     }
 
     public <T> JAXBElement<T> unmarshalJAXBElementFromJSON(Reader reader, Class<T> declaredType) throws JAXBException {

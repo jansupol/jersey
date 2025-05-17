@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -16,9 +16,9 @@
 
 package org.glassfish.jersey.media.sse;
 
-import java.nio.charset.Charset;
-
 import org.glassfish.jersey.server.ChunkedOutput;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Outbound Server-Sent Events channel.
@@ -31,7 +31,7 @@ import org.glassfish.jersey.server.ChunkedOutput;
  */
 public class EventOutput extends ChunkedOutput<OutboundEvent> {
     // encoding does not matter for lower ASCII characters
-    private static final byte[] SSE_EVENT_DELIMITER = "\n".getBytes(Charset.forName("UTF-8"));
+    private static final byte[] SSE_EVENT_DELIMITER = "\n".getBytes(StandardCharsets.UTF_8);
 
     /**
      * Create new outbound Server-Sent Events channel.
