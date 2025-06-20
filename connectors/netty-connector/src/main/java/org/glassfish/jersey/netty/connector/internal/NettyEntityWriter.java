@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -18,9 +18,9 @@ package org.glassfish.jersey.netty.connector.internal;
 
 import io.netty.channel.Channel;
 import io.netty.handler.stream.ChunkedInput;
-import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.ClientRequest;
 import org.glassfish.jersey.client.RequestEntityProcessing;
+import org.glassfish.jersey.netty.connector.ConfigurationExposer;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -88,10 +88,9 @@ public interface NettyEntityWriter {
      */
     Type getType();
 
-    static NettyEntityWriter getInstance(ClientRequest clientRequest, Channel channel) {
+    static NettyEntityWriter getInstance(ClientRequest clientRequest, Channel channel, ConfigurationExposer config) {
         final long lengthLong = clientRequest.getLengthLong();
-        final RequestEntityProcessing entityProcessing = clientRequest.resolveProperty(
-                ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.class);
+        final RequestEntityProcessing entityProcessing = config.requestEntityProcessing(clientRequest);
 
         if ((entityProcessing == null && lengthLong == -1) || entityProcessing == RequestEntityProcessing.CHUNKED) {
             return new DirectEntityWriter(channel, Type.CHUNKED);

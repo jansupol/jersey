@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -30,20 +30,21 @@ import java.net.ProtocolException;
 
 class Expect100ContinueConnectorExtension
         implements ConnectorExtension<HttpRequest, IOException> {
+
+    private final NettyConnectorProvider.Config requestConfiguration;
+
+    Expect100ContinueConnectorExtension(NettyConnectorProvider.Config requestConfiguration) {
+        this.requestConfiguration = requestConfiguration;
+    }
+
     private static final String EXCEPTION_MESSAGE = "Server rejected operation";
     @Override
     public void invoke(ClientRequest request, HttpRequest extensionParam) {
 
         final long length = request.getLengthLong();
-        final RequestEntityProcessing entityProcessing = request.resolveProperty(
-                ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.class);
-
-        final Boolean expectContinueActivated = request.resolveProperty(
-                ClientProperties.EXPECT_100_CONTINUE, Boolean.class);
-        final Long expectContinueSizeThreshold = request.resolveProperty(
-                ClientProperties.EXPECT_100_CONTINUE_THRESHOLD_SIZE,
-                ClientProperties.DEFAULT_EXPECT_100_CONTINUE_THRESHOLD_SIZE);
-
+        final RequestEntityProcessing entityProcessing = requestConfiguration.requestEntityProcessing(request);
+        final Boolean expectContinueActivated = requestConfiguration.expect100Continue(request);
+        final long expectContinueSizeThreshold = requestConfiguration.expect100ContinueThreshold(request);
         final boolean allowStreaming = length > expectContinueSizeThreshold
                 || entityProcessing == RequestEntityProcessing.CHUNKED;
 

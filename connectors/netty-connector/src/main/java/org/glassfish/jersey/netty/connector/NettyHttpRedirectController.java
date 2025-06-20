@@ -34,9 +34,15 @@ import java.util.Map;
  */
 public class NettyHttpRedirectController {
 
+    private NettyConnectorProvider.Config configuration;
+
+    /* package */ void init(NettyConnectorProvider.Config configuration) {
+        this.configuration = configuration;
+    }
+
     /**
      * Configure the HTTP request after HTTP Redirect response has been received.
-     * By default, the HTTP POST request is transformed into HTTP GET for status 301 & 302.
+     * By default, the HTTP POST request is not transformed into HTTP GET for status 301 & 302.
      * Also, HTTP Headers described by RFC 9110 Section 15.4 are removed from the new HTTP Request.
      *
      * @param request The new {@link ClientRequest} to be sent to the redirected URI.
@@ -44,7 +50,7 @@ public class NettyHttpRedirectController {
      * @return {@code true} when the new request should be sent.
      */
     public boolean prepareRedirect(ClientRequest request, ClientResponse response) {
-        final Boolean keepMethod = request.resolveProperty(NettyClientProperties.PRESERVE_METHOD_ON_REDIRECT, Boolean.TRUE);
+        final boolean keepMethod = configuration.preserveMethodOnRedirect(request);
 
         if (Boolean.FALSE.equals(keepMethod) && request.getMethod().equals(HttpMethod.POST)) {
             switch (response.getStatus()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -51,8 +51,47 @@ import org.glassfish.jersey.client.spi.ConnectorProvider;
 @Beta
 public class NettyConnectorProvider implements ConnectorProvider {
 
+    private final Config config;
+
+    public NettyConnectorProvider() {
+        this.config = config();
+    }
+
+    private NettyConnectorProvider(Config config) {
+        this.config = config;
+    }
+
     @Override
     public Connector getConnector(Client client, Configuration runtimeConfig) {
-        return new NettyConnector(client);
+        return new NettyConnector(client, config);
+    }
+
+    /**
+     * Instantiate a builder allowing to configure the NettyConnectorProvider.
+     * @return a new {@link Config} instance.
+     */
+    public static Config config() {
+        return new Config();
+    }
+
+    public static final class Config extends NettyConnectorConfiguration<Config> {
+
+        private Config() {
+        }
+
+        @Override
+        protected Config instance() {
+            return new Config();
+        }
+
+        @Override
+        protected Config self() {
+            return this;
+        }
+
+        public NettyConnectorProvider build() {
+            return new NettyConnectorProvider(this);
+        }
+
     }
 }
