@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2022 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2025 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -45,6 +46,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.ProcessingException;
+import javax.ws.rs.RuntimeType;
 
 import org.glassfish.jersey.internal.util.ReflectionHelper;
 
@@ -109,13 +111,9 @@ public final class OsgiRegistry implements SynchronousBundleListener {
         final ServiceFinder.ServiceIteratorProvider defaultIterator = new ServiceFinder.DefaultServiceIteratorProvider();
 
         @Override
-        public <T> Iterator<T> createIterator(
-                final Class<T> serviceClass,
-                final String serviceName,
-                final ClassLoader loader,
-                final boolean ignoreOnClassNotFound) {
+        public <T> Iterator<T> createIterator(ServiceFinder.Builder<T> builder) {
 
-            final List<Class<?>> providerClasses = locateAllProviders(serviceClass);
+            final List<Class<?>> providerClasses = locateAllProviders(builder.service, builder.runtimeType);
             if (!providerClasses.isEmpty()) {
                 return new Iterator<T>() {
 
@@ -133,9 +131,9 @@ public final class OsgiRegistry implements SynchronousBundleListener {
                         try {
                             return nextClass.newInstance();
                         } catch (final Exception ex) {
-                            final ServiceConfigurationError sce = new ServiceConfigurationError(serviceName + ": "
+                            final ServiceConfigurationError sce = new ServiceConfigurationError(builder.serviceName + ": "
                                     + LocalizationMessages.PROVIDER_COULD_NOT_BE_CREATED(
-                                    nextClass.getName(), serviceClass, ex.getLocalizedMessage()));
+                                    nextClass.getName(), builder.service, ex.getLocalizedMessage()));
                             sce.initCause(ex);
                             throw sce;
                         }
@@ -147,13 +145,12 @@ public final class OsgiRegistry implements SynchronousBundleListener {
                     }
                 };
             }
-            return defaultIterator.createIterator(serviceClass, serviceName, loader, ignoreOnClassNotFound);
+            return defaultIterator.createIterator(builder);
         }
 
         @Override
-        public <T> Iterator<Class<T>> createClassIterator(
-                final Class<T> service, final String serviceName, final ClassLoader loader, final boolean ignoreOnClassNotFound) {
-            final List<Class<?>> providerClasses = locateAllProviders(service);
+        public <T> Iterator<Class<T>> createClassIterator(ServiceFinder.Builder<T> builder) {
+            final List<Class<?>> providerClasses = locateAllProviders(builder.service, builder.runtimeType);
             if (!providerClasses.isEmpty()) {
                 return new Iterator<Class<T>>() {
 
@@ -176,7 +173,7 @@ public final class OsgiRegistry implements SynchronousBundleListener {
                     }
                 };
             }
-            return defaultIterator.createClassIterator(service, serviceName, loader, ignoreOnClassNotFound);
+            return defaultIterator.createClassIterator(builder);
         }
     }
 
@@ -202,7 +199,7 @@ public final class OsgiRegistry implements SynchronousBundleListener {
                 if (LOGGER.isLoggable(Level.FINEST)) {
                     LOGGER.log(Level.FINEST, "Loading providers for SPI: {0}", spi);
                 }
-                reader = new BufferedReader(new InputStreamReader(spiRegistryUrl.openStream(), "UTF-8"));
+                reader = new BufferedReader(new InputStreamReader(spiRegistryUrl.openStream(), StandardCharsets.UTF_8));
                 String providerClassName;
 
                 final List<Class<?>> providerClasses = new ArrayList<Class<?>>();
@@ -442,7 +439,7 @@ public final class OsgiRegistry implements SynchronousBundleListener {
      * Get the Class from the class name.
      * <p>
      * The context class loader will be utilized if accessible and non-null.
-     * Otherwise the defining class loader of this class will
+     * Otherwise, the defining class loader of this class will
      * be utilized.
      *
      * @param className the class name.
@@ -552,7 +549,7 @@ public final class OsgiRegistry implements SynchronousBundleListener {
         }
     }
 
-    private List<Class<?>> locateAllProviders(final Class<?> serviceClass) {
+    private List<Class<?>> locateAllProviders(final Class<?> serviceClass, RuntimeType runtimeType) {
         lock.readLock().lock();
         try {
             final List<Class<?>> result = new LinkedList<Class<?>>();
@@ -560,7 +557,7 @@ public final class OsgiRegistry implements SynchronousBundleListener {
                 if (value.containsKey(serviceClass.getName())) {
                     try {
                         for (final Class<?> clazz : value.get(serviceClass.getName()).call()) {
-                            if (serviceClass.isAssignableFrom(clazz)) {
+                            if (ServiceFinder.isConstrained(clazz, runtimeType) && serviceClass.isAssignableFrom(clazz)) {
                                 result.add(clazz);
                             } else if (LOGGER.isLoggable(Level.FINER)) {
                                 LOGGER.log(Level.FINER,
